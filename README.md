@@ -1,49 +1,108 @@
-Reveal
+# Reveal - Setup
 
-Installation:
+## 📦 Data Setup
 
-open your terminal
+1. **Preprocess Your Dataset**
 
-first install node (development setup had node v22.13.0)
+   Go to the [Reveal Preprocessing Repository](https://github.com/leovsferreira/reveal-preprocessing)  
+   and follow the steps there to preprocess your dataset.
 
-Then install angular (development setup had angular 14.1.0)
+2. **Organize the Backend Dataset Structure**
 
-run npm install
+   After completing preprocessing, navigate to your Reveal backend folder and create the following structure:
 
-Go to the front folder and run ng serve to start the front end
+```bash
+/back/
+├── dataset/
+│   ├── llm/
+│   │   ├── processed/
+│   │   │   ├── 0.jpg
+│   │   │   ├── 1.jpg
+│   │   │   └── ...
+│   │   └── thumbnails/
+│   │       ├── 0.jpg
+│   │       ├── 1.jpg
+│   │       └── ...
+│   └── files/
+│       ├── unique_words_final.json
+│       ├── data_final.json
+│       ├── multi_clip_images_embedding.pt
+│       ├── multi_clip_words_embedding.pt
+│       └── multi_clip_joint_embedding.pt
+```
 
-For the backend, open a new terminal and go to the back folder
 
-create a new conda environment
+✅ **Make sure**:
+- All `.jpg` files are named using their numeric IDs (`0.jpg`, `1.jpg`, etc.).
+- The JSON and `.pt` files come directly from the Reveal Preprocessing output.
 
-run the requirements.txt file with
+---
 
+## ⚙️ Installation
+
+### 1. Prerequisites
+
+Ensure you have the following installed:
+
+- **Node.js** (v22.13.0 recommended)
+- **npm** (comes with Node)
+- **Angular CLI** (v14.1.0)
+- **Python** (3.9+)
+- **conda** (recommended for managing the backend environment)
+
+---
+
+### 2. Frontend Setup
+
+```bash
+# Navigate to the frontend folder
+cd front
+
+# Install dependencies
+npm install
+
+# Run the frontend
+ng serve
+```
+
+Once it compiles successfully, open your browser and visit:
+👉 http://localhost:4200
+
+### 3. Backend Setup
+
+```bash
+# Open a new terminal
+cd back
+
+# Create and activate a conda environment
+conda create -n reveal python=3.9 -y
+conda activate reveal
+
+# Install dependencies
 pip install -r requirements.txt
 
-run the backend server with python app.py
+# Run the backend server
+python app.py
+```
 
-Data setup:
+The backend will start running.
 
-Please take your dataset, go to: https://github.com/leovsferreira/reveal-preprocessing
+## 🧠 Troubleshooting
 
-Follow the steps there to preprocess your data
+### Angular not recognized?
+Install it globally:
 
-you can skip these steps -- I have already uploaded the images that you (Keira and Deepikka)
+```bash
+npm install -g @angular/cli@14.1.0
+```
 
-In order to run reveal, images must be served using services such as google cloud and aws
+### Missing Node version?
+Install Node using nvm:
 
-Once you you have the images publicly available and that can be accessible through links (ill implement this later)
+```bash
+nvm install 22.13.0
+nvm use 22.13.0
+```
 
-Next, create the following repositories in the back folder
-
-/dataset/files/
-
-transfer tensor files generated in the reveal preprocessing pipeline into the folder and also data_final.json and unique_texts_final.json
-
-then create the following repository
-
-/dataset/llm/
-
-copy the /processed/ and the /thumbnails/ folder with all images inside the /llm/ folder
-
-
+### Backend cannot find dataset files?
+Double-check that your directory structure exactly matches the layout shown above and that filenames are consistent with the preprocessing output.
