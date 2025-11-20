@@ -151,11 +151,16 @@
         <ul id="contextmenu-combined-embedding"></ul>
         <ul id="contextmenu-galleries"></ul>
     </div>
-    <div class="force-graph" id="force-graph-div" style="z-index: 99;">
-        <app-force-graph
-        (embeddingState) = "this.embeddingsToState($event)"
-        (resetAll) = "this.resetAll('reset')"
-        ></app-force-graph>
+    <div class="force-graph-and-map-container">
+        <div class="force-graph" id="force-graph-div" style="z-index: 99;">
+            <app-force-graph
+            (embeddingState) = "this.embeddingsToState($event)"
+            (resetAll) = "this.resetAll('reset')"
+            ></app-force-graph>
+        </div>
+        <div class="map-wrapper">
+            <app-map></app-map>
+        </div>  
     </div>
     <ul id="contextmenu-force-graph"></ul>
     <div class="add-bucket">
