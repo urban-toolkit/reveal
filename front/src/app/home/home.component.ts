@@ -197,6 +197,7 @@ export class HomeComponent implements AfterViewInit {
       this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
       this.wordCloud.updateWordCloud(res.texts);
       this.spinner.hide();
+      this.map.loadMap();
       console.log(res)
     } else {
       alert("Query empty")
@@ -222,13 +223,13 @@ export class HomeComponent implements AfterViewInit {
         this.textEmbedding.setupTextEmbedding(res.texts);
         this.combinedEmbedding.setupCombinedEmbedding(res.images, res.texts);
         this.imageGallery.updateImageGallery(res.images);
-      this.imageGallery.tabsCounter = 0;
+        this.imageGallery.tabsCounter = 0;
         this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
         this.wordCloud.updateWordCloud(res.texts);
+        this.map.loadMap();
       } else {
         alert('Empty result')
       }
-
     } else {
       this.resetAll();
     }
@@ -262,6 +263,7 @@ export class HomeComponent implements AfterViewInit {
       this.imageGallery.tabsCounter = 0;
     this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
     this.wordCloud.updateWordCloud(res.texts);
+    this.map.loadMap();
     this.spinner.hide();
   }
 
@@ -627,6 +629,7 @@ export class HomeComponent implements AfterViewInit {
     this.coloLegend.clear();
     this.imageGallery.clear();
     this.wordCloud.clear();
+    this.map.clear();
     if(from == 'reset')  this.forceGraph.reset();
   }
 

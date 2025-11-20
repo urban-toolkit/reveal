@@ -112,7 +112,6 @@ export class ForceGraphComponent implements OnInit {
       const arrowX = targetNode.x - (dx / distance) * radius;
       const arrowY = targetNode.y - (dy / distance) * radius;
 
-      // Draw the link
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(arrowX, arrowY);
