@@ -10,6 +10,7 @@ import { WordCloudComponent } from '../word-cloud/word-cloud.component';
 import { BucketComponent } from '../bucket/bucket.component';
 import { StateComponent } from '../state/state.component';
 import { ModelGalleryComponent } from 'src/app/model-gallery/model-gallery.component';
+import { MapComponent } from 'src/app/map/map.component';
 
 import { ApiService } from 'src/app/shared/api.service';
 import { AuthService } from '../shared/services/auth.service';
@@ -63,6 +64,7 @@ export class HomeComponent implements AfterViewInit {
   @ViewChild(BucketComponent, {static: true}) public bucket!: BucketComponent;
   @ViewChild(StateComponent, {static: true}) public state!: StateComponent;
   @ViewChild(ModelGalleryComponent, {static: true}) public modalGallery!: ModelGalleryComponent;
+  @ViewChild(MapComponent, {static: true}) private map!: MapComponent;
 
   constructor(public api: ApiService,
               public global: GlobalService, 
