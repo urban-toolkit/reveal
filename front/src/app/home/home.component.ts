@@ -226,13 +226,13 @@ export class HomeComponent implements AfterViewInit {
         this.imageGallery.tabsCounter = 0;
         this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
         this.wordCloud.updateWordCloud(res.texts);
-        this.map.loadMap();
       } else {
         alert('Empty result')
       }
     } else {
       this.resetAll();
     }
+    this.map.loadMap();
     this.spinner.hide();
   }
 
