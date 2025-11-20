@@ -45,6 +45,7 @@ import { BucketComponent } from './bucket/bucket.component';
 import { StateComponent } from './state/state.component';
 import { ModelGalleryComponent } from './model-gallery/model-gallery.component';
 import { CombinedEmbeddingComponent } from './combined-embedding/combined-embedding.component';
+import { MapComponent } from './map/map.component';
 
 @NgModule({
   declarations: [
@@ -65,6 +66,7 @@ import { CombinedEmbeddingComponent } from './combined-embedding/combined-embedd
     StateComponent,
     ModelGalleryComponent,
     CombinedEmbeddingComponent,
+    MapComponent,
   ],
   imports: [
     BrowserModule,
