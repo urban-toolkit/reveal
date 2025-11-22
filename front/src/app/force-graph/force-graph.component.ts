@@ -31,7 +31,7 @@ export class ForceGraphComponent implements OnInit {
   private snapInDistance: number = 10;
   private dragSourceNode:any = null;
   public BuildSetQuery: BuildSetQuery = new BuildSetQuery();
-  public schema: any = {number_of_queries: 0, query: [], imagesIds: [], similarities: []};
+  public schema: any = {number_of_queries: 0, query: [], imagesIds: [], similarities: [], locationsData: []};
   
   constructor(public global: GlobalService, public api: ApiService) { }
 
@@ -149,6 +149,8 @@ export class ForceGraphComponent implements OnInit {
     const imagesIds = schema.imagesIds;
     const textsIds = schema.textsIds;
     const textsSimilarities = schema.textsSimilarities;
+    const locationsData = schema.locationsData;
+    console.log(schema)
     this.forceGraphData.nodes.push({id: nodeId,
                                     textsQuery: textsQuery,
                                     imagesQuery: imagesQuery,
@@ -159,6 +161,7 @@ export class ForceGraphComponent implements OnInit {
                                     textsIds: textsIds,
                                     textsSimilarities: textsSimilarities,
                                     iteractionType: 0,
+                                    locationsData: locationsData,
                                     from: from
                                   });
     if(from == 'interface') {

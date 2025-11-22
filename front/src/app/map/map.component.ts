@@ -15,6 +15,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   private mapInitialized = false;
   public hasData = false;
   private pendingInit = false;
+  private markers: mapboxgl.Marker[] = [];
 
   constructor() { }
 
@@ -36,12 +37,28 @@ export class MapComponent implements OnInit, AfterViewInit {
       return;
     }
     
+    const container = this.mapContainer.nativeElement;
+    if (container.offsetHeight === 0 || container.offsetWidth === 0) {
+      console.warn('Map container has no dimensions, retrying...');
+      setTimeout(() => this.initializeMap(), 100);
+      return;
+    }
+    
     this.map = new mapboxgl.Map({
       container: this.mapContainer.nativeElement,
       style: this.style,
       center: [-87.6298, 41.8781],
       zoom: 10,
-      attributionControl: false
+      attributionControl: false,
+      interactive: true,
+      scrollZoom: true,
+      boxZoom: true,
+      dragRotate: true,
+      dragPan: true,
+      keyboard: true,
+      doubleClickZoom: true,
+      touchZoomRotate: true,
+      touchPitch: true
     });
 
     this.map.on('load', () => {
@@ -49,6 +66,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       if (logo) {
         logo.style.display = 'none';
       }
+      
+      this.map.resize();
     });
 
     this.mapInitialized = true;
@@ -57,26 +76,35 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public loadMap(centerLng?: number, centerLat?: number, zoom?: number): void {
     this.hasData = true;
+    this.clearMarkers();
     
     setTimeout(() => {
       if (!this.mapInitialized) {
         this.initializeMap();
       }
       
-      if (this.mapInitialized && centerLng !== undefined && centerLat !== undefined) {
-        this.map.setCenter([centerLng, centerLat]);
-        if (zoom !== undefined) {
-          this.map.setZoom(zoom);
+      setTimeout(() => {
+        if (this.mapInitialized) {
+          this.map.resize();
+          
+          if (centerLng !== undefined && centerLat !== undefined) {
+            this.map.setCenter([centerLng, centerLat]);
+            if (zoom !== undefined) {
+              this.map.setZoom(zoom);
+            }
+          }
         }
-      }
+      }, 100);
     }, 100);
   }
 
   public clear(): void {
     this.hasData = false;
+    this.clearMarkers();
   }
 
   addMarker(lng: number, lat: number, popupText?: string): void {
+    console.log(lat,lng)
     if (!this.mapInitialized) {
       setTimeout(() => {
         this.initializeMap();
@@ -85,15 +113,27 @@ export class MapComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const marker = new mapboxgl.Marker()
+    const marker = new mapboxgl.Marker({
+      color: '#97a97c'
+    })
       .setLngLat([lng, lat])
       .addTo(this.map);
 
     if (popupText) {
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setText(popupText);
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: false
+      })
+        .setHTML(`<div style="padding: 5px; font-size: 12px;">${popupText}</div>`);
       marker.setPopup(popup);
     }
+
+    this.markers.push(marker);
+  }
+
+  clearMarkers(): void {
+    this.markers.forEach(marker => marker.remove());
+    this.markers = [];
   }
 
   flyTo(lng: number, lat: number, zoom: number = 12): void {
@@ -121,5 +161,19 @@ export class MapComponent implements OnInit, AfterViewInit {
   getZoom(): number {
     if (!this.mapInitialized) return 10;
     return this.map.getZoom();
+  }
+
+  fitToMarkers(): void {
+    if (!this.mapInitialized || this.markers.length === 0) return;
+    
+    const bounds = new mapboxgl.LngLatBounds();
+    this.markers.forEach(marker => {
+      bounds.extend(marker.getLngLat());
+    });
+    
+    this.map.fitBounds(bounds, {
+      padding: 50,
+      maxZoom: 15
+    });
   }
 }

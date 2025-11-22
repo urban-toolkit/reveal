@@ -87,9 +87,9 @@ def format_image_data(images_df, indices_im, images_sim, parameters):
         if 'lat' in images_df.columns and 'lon' in images_df.columns:
             lat = row['lat'] if pd.notna(row['lat']) else None
             lon = row['lon'] if pd.notna(row['lon']) else None
-            image_locations.append({'lat': lat, 'lon': lon, 'filename': row['filename']})
+            image_locations.append({'lat': lat, 'lon': lon})
         else:
-            image_locations.append({'lat': None, 'lon': None, 'filename': row['filename']})
+            image_locations.append({'lat': None, 'lon': None})
         
     text_ids_series = images_df['text_ids'] if 'text_ids' in images_df.columns else pd.Series([[]]*len(images_df), index=images_df.index)
     text_ids = []

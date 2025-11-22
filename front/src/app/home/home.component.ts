@@ -187,6 +187,7 @@ export class HomeComponent implements AfterViewInit {
       schema.textsSimilarities = res.texts.similarities;
       schema.imagesSimilarities = res.images.similarities;
       schema.similarityValue = res.images.similarityValue;
+      schema.locationsData = res.images.locations;
       this.forceGraph.schema = schema;
       this.forceGraph.addNode('searchbar');
       this.imageEmbedding.setupImageEmbedding(res.images);
@@ -197,7 +198,7 @@ export class HomeComponent implements AfterViewInit {
       this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
       this.wordCloud.updateWordCloud(res.texts);
       this.spinner.hide();
-      this.map.loadMap();
+      this.loadMapWithLocations(res.images.locations);
       console.log(res)
     } else {
       alert("Query empty")
@@ -226,13 +227,13 @@ export class HomeComponent implements AfterViewInit {
         this.imageGallery.tabsCounter = 0;
         this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
         this.wordCloud.updateWordCloud(res.texts);
+        this.loadMapWithLocations(res.images.locations);
       } else {
         alert('Empty result')
       }
     } else {
       this.resetAll();
     }
-    this.map.loadMap();
     this.spinner.hide();
   }
 
@@ -254,6 +255,7 @@ export class HomeComponent implements AfterViewInit {
     schema.textsSimilarities = res.texts.similarities;
     schema.imagesSimilarities = res.images.similarities;
     schema.similarityValue = res.images.similarityValue;
+    schema.locationsData = res.images.locations;
     this.forceGraph.schema = schema;
     this.forceGraph.addNode('interface');
     this.imageEmbedding.setupImageEmbedding(res.images);
@@ -263,7 +265,7 @@ export class HomeComponent implements AfterViewInit {
       this.imageGallery.tabsCounter = 0;
     this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
     this.wordCloud.updateWordCloud(res.texts);
-    this.map.loadMap();
+    this.loadMapWithLocations(res.images.locations);
     this.spinner.hide();
   }
 
@@ -664,5 +666,29 @@ export class HomeComponent implements AfterViewInit {
 
   onEmbeddingToggle(event: any) {
     this.displayCombinedComponent = event;
+  }
+
+  loadMapWithLocations(locations: any[]): void {
+    const validLocations = locations.filter(loc => 
+      loc.lat !== null && 
+      loc.lon !== null && 
+      !isNaN(loc.lat) && 
+      !isNaN(loc.lon)
+    );
+    
+    if (validLocations.length === 0) {
+      this.map.loadMap();
+      return;
+    }
+    
+    const centerLat = validLocations.reduce((sum, loc) => sum + loc.lat, 0) / validLocations.length;
+    const centerLon = validLocations.reduce((sum, loc) => sum + loc.lon, 0) / validLocations.length;
+    
+    this.map.loadMap(centerLon, centerLat, 10);
+    
+    validLocations.forEach((loc, index) => {
+      const popupText = `Image ${index + 1}`;
+      this.map.addMarker(loc.lon, loc.lat, popupText);
+    });
   }
 }

@@ -4,7 +4,6 @@ import { Query, StateQuery, BuildSetQuery, InfoQuery } from "./api.models";
 
 @Injectable()
 export class ApiService {
-    // xhttp urls
     xhttp_url_search: string = 'http://localhost:8001/api/search';
     xhttp_url_state: string = 'http://localhost:8001/api/state';
     xhttp_url_build_set: string = 'http://localhost:8001/api/build_set';
@@ -20,12 +19,10 @@ export class ApiService {
         query['queryType'] = serverQuery['queryType'];
         query['similarityValue'] = serverQuery['similarityValue'];
         query['from'] = serverQuery['from'];
-        // post header
         const headers = {
             'Content-Type': 'application/json',
             'dataType': 'json'
         };
-        // Return a new promise.
         const response = await fetch(this.xhttp_url_search, {
             method: 'POST',
             headers,
@@ -42,12 +39,10 @@ export class ApiService {
         query["textsIds"] = stateQuery['textsIds'];
         query["textsSimilarities"] = stateQuery['textsSimilarities'];
         query["similarityValue"] = stateQuery['similarityValue'];
-        // post header
         const headers = {
             'Content-Type': 'application/json',
             'dataType': 'json'
         };
-        // Return a new promise.
         const response = await fetch(this.xhttp_url_state, {
             method: 'POST',
             headers,
@@ -65,12 +60,10 @@ export class ApiService {
         query["textsSimilarities"] = buildSetQuery['textsSimilarities'];
         query["similarityValue"] = buildSetQuery['similarityValue'];
         query["setType"] = buildSetQuery['setType'];
-        // post header
         const headers = {
             'Content-Type': 'application/json',
             'dataType': 'json'
         };
-        // Return a new promise.
         const response = await fetch(this.xhttp_url_build_set, {
             method: 'POST',
             headers,
@@ -83,12 +76,10 @@ export class ApiService {
     async getInfo(infoQuery: InfoQuery): Promise<any> {
         let query = new InfoQuery();
         query['string'] = infoQuery['string'];
-        // post header
         const headers = {
             'Content-Type': 'application/json',
             'dataType': 'json'
         };
-        // Return a new promise.
         const response = await fetch(this.xhttp_url_info, {
             method: 'POST',
             headers,
