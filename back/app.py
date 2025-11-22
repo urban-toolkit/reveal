@@ -80,6 +80,17 @@ def format_image_data(images_df, indices_im, images_sim, parameters):
 
     image_coords = images_df[['x', 'y']].to_numpy().tolist()
     image_path = images_df[['filename']].to_numpy().tolist()
+
+    image_locations = []
+    for idx in image_index:
+        row = images_df.loc[idx]
+        if 'lat' in images_df.columns and 'lon' in images_df.columns:
+            lat = row['lat'] if pd.notna(row['lat']) else None
+            lon = row['lon'] if pd.notna(row['lon']) else None
+            image_locations.append({'lat': lat, 'lon': lon, 'filename': row['filename']})
+        else:
+            image_locations.append({'lat': None, 'lon': None, 'filename': row['filename']})
+        
     text_ids_series = images_df['text_ids'] if 'text_ids' in images_df.columns else pd.Series([[]]*len(images_df), index=images_df.index)
     text_ids = []
     for v in text_ids_series.tolist():
@@ -95,6 +106,7 @@ def format_image_data(images_df, indices_im, images_sim, parameters):
         "labelPaths": image_path,
         "numberOfImages": len(image_index),
         "textIds": text_ids,
+        "locations": image_locations,
         "similarityValue": parameters['similarityValue'] / 100.0
     }
 
