@@ -150,7 +150,6 @@ export class ForceGraphComponent implements OnInit {
     const textsIds = schema.textsIds;
     const textsSimilarities = schema.textsSimilarities;
     const locationsData = schema.locationsData;
-    console.log(schema)
     this.forceGraphData.nodes.push({id: nodeId,
                                     textsQuery: textsQuery,
                                     imagesQuery: imagesQuery,
@@ -246,6 +245,7 @@ export class ForceGraphComponent implements OnInit {
     const imagesQuery:any = [];
     const similarityValue:any = [];
     const queryTypes:any = [];
+    const locationsData:any = [];
     let queryType;
 
     if(type == 'intersection' || type == 'union') {
@@ -257,6 +257,7 @@ export class ForceGraphComponent implements OnInit {
         textsQuery.push(...selectedNode.textsQuery);
         imagesQuery.push(...selectedNode.imagesQuery);
         similarityValue.push(selectedNode.similarityValue);
+        locationsData.push(selectedNode.locationsData);
         queryTypes.push(selectedNode.queryType);
       });
     } else {
@@ -270,6 +271,11 @@ export class ForceGraphComponent implements OnInit {
 
       const firstNode = [...nodes][0]
       const secondNode = [...nodes][1]
+
+      const diffLocationsData: any = [] 
+      for(let i  = 0; i < firstNode.locationsData.length; i++) {
+        if(!secondNode.locationsData.includes(firstNode.locationsData[i])) diffLocationsData.push(firstNode.locationsData[i])
+      }
 
       const diffImagesIds: any = [] 
       for(let i  = 0; i < firstNode.imagesIds.length; i++) {
@@ -310,18 +316,18 @@ export class ForceGraphComponent implements OnInit {
       iteractionType = 3;
       this.BuildSetQuery.setType = 'difference'
     }
-    this.requestNewSet(nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType);
+    this.requestNewSet(nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData);
   }
 
-  async requestNewSet(nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number) {
+  async requestNewSet(nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any) {
     const res = await this.api.buildSet(this.BuildSetQuery);
     if(similarityValue.length && similarityValue.length > 1) {
       similarityValue = similarityValue.flat();
     }
-    this.createLinks(res, nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType);
+    this.createLinks(res, nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData);
   }
 
-  async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number) {
+  async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any) {
     const imagesIds = res.images.labels;
     const textsIds = res.texts.labels;
     const imagesSimilarities = res.images.similarities;
@@ -340,6 +346,7 @@ export class ForceGraphComponent implements OnInit {
                                     imagesSimilarities:  imagesSimilarities,
                                     textsSimilarities: textsSimilarities, 
                                     iteractionType: iteractionType,
+                                    locationsData: locationsData,
                                     from: 'set'
                                   });
     

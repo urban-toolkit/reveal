@@ -105,7 +105,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   addMarker(lng: number, lat: number, popupContent?: string): void {
-    console.log(lat,lng)
     if (!this.mapInitialized) {
       setTimeout(() => {
         this.initializeMap();

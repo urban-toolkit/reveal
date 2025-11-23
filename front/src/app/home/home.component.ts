@@ -199,7 +199,6 @@ export class HomeComponent implements AfterViewInit {
       this.wordCloud.updateWordCloud(res.texts);
       this.spinner.hide();
       this.loadMapWithLocations(res.images.locations);
-      console.log(res)
     } else {
       alert("Query empty")
     }
