@@ -6,7 +6,7 @@
 }
 
 #gallery {
-    width: 360px; /* Can be in percentage also. */
+    width: 360px;
     margin: 0 auto;
     margin-top: 10%;
 }

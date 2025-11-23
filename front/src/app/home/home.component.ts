@@ -687,8 +687,8 @@ export class HomeComponent implements AfterViewInit {
     this.map.loadMap(centerLon, centerLat, 10);
     
     validLocations.forEach((loc, index) => {
-      const popupText = `Image ${index + 1}`;
-      this.map.addMarker(loc.lon, loc.lat, popupText);
+      const popupContent = `https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${index}.jpg`;
+      this.map.addMarker(loc.lon, loc.lat, popupContent);
     });
   }
 }

@@ -58,7 +58,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       keyboard: true,
       doubleClickZoom: true,
       touchZoomRotate: true,
-      touchPitch: true
+      touchPitch: true,
+      projection: "mercator"
     });
 
     this.map.on('load', () => {
@@ -103,12 +104,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.clearMarkers();
   }
 
-  addMarker(lng: number, lat: number, popupText?: string): void {
+  addMarker(lng: number, lat: number, popupContent?: string): void {
     console.log(lat,lng)
     if (!this.mapInitialized) {
       setTimeout(() => {
         this.initializeMap();
-        setTimeout(() => this.addMarker(lng, lat, popupText), 100);
+        setTimeout(() => this.addMarker(lng, lat, popupContent), 100);
       }, 100);
       return;
     }
@@ -119,12 +120,12 @@ export class MapComponent implements OnInit, AfterViewInit {
       .setLngLat([lng, lat])
       .addTo(this.map);
 
-    if (popupText) {
+    if (popupContent) {
       const popup = new mapboxgl.Popup({ 
         offset: 25,
         closeButton: false
       })
-        .setHTML(`<div style="padding: 5px; font-size: 12px;">${popupText}</div>`);
+        .setHTML(`<img src="${popupContent}" style="width: 190px; height: 190px;"></img>`);
       marker.setPopup(popup);
     }
 
