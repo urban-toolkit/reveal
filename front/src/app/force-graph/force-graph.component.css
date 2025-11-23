@@ -8,7 +8,7 @@
     cursor: pointer;
     position: absolute;
     left: 5px;
-    top: calc(46% + 118px);
+    top: 40px;
     z-index: 100;
 }
 
