@@ -65,6 +65,11 @@
                 </button>
             </form>
 
+            <button class="log-out" style="width: 39px; right: 109px; bottom:18px" (click)="openModal(templateBucket)"
+                matTooltip="Create a new bucket to store multimodal data, including images and their corresponding text.">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+
             <button class="log-out" style="width: 39px; right: 60px; bottom:18px" (click)="openModal(templateState)"
                 matTooltip="Save the interface state, including all data records, search history, and current visualization states, for future reference or continued work.">
                 <i class="fas fa-floppy-disk fa-xl"></i>
@@ -163,12 +168,6 @@
         </div>  
     </div>
     <ul id="contextmenu-force-graph"></ul>
-    <div class="add-bucket">
-        <button type="button" style="background-color:rgb(238, 238, 238) !important;" class="btn btn-custom" (click)="openModal(templateBucket)"
-            matTooltip="Create a new bucket to store multimodal data, including images and their corresponding text.">
-            <i style="color: #97a97c;" class="fa-solid fa-plus"></i>
-        </button>   
-    </div>
 
     <app-bucket
     (bucketAdded) = "this.setBucketsMenu($event);"
