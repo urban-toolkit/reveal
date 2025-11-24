@@ -15,7 +15,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   private mapInitialized = false;
   public hasData = false;
   private pendingInit = false;
-  private markers: mapboxgl.Marker[] = [];
+  private selectionMarker: mapboxgl.Marker | null = null;
+  private heatmapData: any = null;
+  private locationIndexMap: Map<number, { lon: number, lat: number }> = new Map();
 
   constructor() { }
 
@@ -69,6 +71,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
       
       this.map.resize();
+      
+      if (this.heatmapData) {
+        this.addHeatmapLayer();
+      }
     });
 
     this.mapInitialized = true;
@@ -77,7 +83,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public loadMap(centerLng?: number, centerLat?: number, zoom?: number): void {
     this.hasData = true;
-    this.clearMarkers();
+    this.clearSelectionMarker();
     
     setTimeout(() => {
       if (!this.mapInitialized) {
@@ -101,39 +107,213 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public clear(): void {
     this.hasData = false;
-    this.clearMarkers();
+    this.clearSelectionMarker();
+    this.clearHeatmap();
+    this.locationIndexMap.clear();
   }
 
-  addMarker(lng: number, lat: number, popupContent?: string): void {
+  public loadHeatmapData(locations: any[], imageLabels: any[]): void {
+    this.locationIndexMap.clear();
+    locations.forEach((loc, index) => {
+      this.locationIndexMap.set(imageLabels[index], { lon: loc.lon, lat: loc.lat });
+    });
+    
+    const features = locations.map(loc => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [loc.lon, loc.lat]
+      },
+      properties: {
+        weight: 1
+      }
+    }));
+
+    this.heatmapData = {
+      type: 'FeatureCollection',
+      features: features
+    };
+    
+    const centerLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
+    const centerLon = locations.reduce((sum, loc) => sum + loc.lon, 0) / locations.length;
+    
+    this.loadMap(centerLon, centerLat, 10);
+    
+    if (this.mapInitialized && this.map.isStyleLoaded()) {
+      this.addHeatmapLayer();
+    }
+  }
+
+  private addHeatmapLayer(): void {
+    if (!this.heatmapData || !this.mapInitialized) return;
+
+    if (this.map.getLayer('heatmap-layer')) {
+      this.map.removeLayer('heatmap-layer');
+    }
+    if (this.map.getLayer('heatmap-point')) {
+      this.map.removeLayer('heatmap-point');
+    }
+    if (this.map.getSource('heatmap-source')) {
+      this.map.removeSource('heatmap-source');
+    }
+
+    this.map.addSource('heatmap-source', {
+      type: 'geojson',
+      data: this.heatmapData
+    });
+
+    this.map.addLayer({
+      id: 'heatmap-layer',
+      type: 'heatmap',
+      source: 'heatmap-source',
+      maxzoom: 15,
+      paint: {
+        'heatmap-weight': 1,
+        'heatmap-intensity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          0,
+          1,
+          15,
+          3
+        ],
+        
+        'heatmap-color': [
+          'interpolate',
+          ['linear'],
+          ['heatmap-density'],
+          0,
+          'rgba(255, 245, 240, 0)',
+          0.2,
+          'rgb(254, 224, 210)',
+          0.4,
+          'rgb(252, 187, 161)',
+          0.6,
+          'rgb(252, 146, 114)',
+          0.8,
+          'rgb(251, 106, 74)',
+          1,
+          'rgb(203, 24, 29)'
+        ],
+        'heatmap-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          0,
+          2,
+          15,
+          30
+        ],
+        'heatmap-opacity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          12,
+          1,
+          15,
+          0.5
+        ]
+      }
+    });
+
+    this.map.addLayer({
+      id: 'heatmap-point',
+      type: 'circle',
+      source: 'heatmap-source',
+      minzoom: 12,
+      paint: {
+        'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          12,
+          2,
+          18,
+          6
+        ],
+        'circle-color': 'rgb(203, 24, 29)',
+        'circle-stroke-color': 'white',
+        'circle-stroke-width': 1,
+        'circle-opacity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          12,
+          0,
+          13,
+          0.8
+        ]
+      }
+    });
+  }
+
+  private clearHeatmap(): void {
+    if (!this.mapInitialized) return;
+
+    if (this.map.getLayer('heatmap-layer')) {
+      this.map.removeLayer('heatmap-layer');
+    }
+    if (this.map.getLayer('heatmap-point')) {
+      this.map.removeLayer('heatmap-point');
+    }
+    if (this.map.getSource('heatmap-source')) {
+      this.map.removeSource('heatmap-source');
+    }
+    
+    this.heatmapData = null;
+  }
+
+  public toggleSelectionMarker(imageIndex: any, show: boolean): void {
+    this.clearSelectionMarker();
+    
+    console.log("HEYA", imageIndex)
+
+    for(let i = 0; i < imageIndex.labels.length; i++) {
+      
+      const location = this.locationIndexMap.get(imageIndex.labels[i]);
+
+      if (!location) {
+        console.warn(`No location data for image index ${imageIndex.labels[i]}`);
+        return;
+      }
+
+      this.showSelectionMarker(location.lon, location.lat, imageIndex.labels[i]);
+    }
+  }
+
+  private showSelectionMarker(lng: number, lat: number, imageIndex: number): void {
     if (!this.mapInitialized) {
       setTimeout(() => {
         this.initializeMap();
-        setTimeout(() => this.addMarker(lng, lat, popupContent), 100);
+        setTimeout(() => this.showSelectionMarker(lng, lat, imageIndex), 100);
       }, 100);
       return;
     }
 
-    const marker = new mapboxgl.Marker({
-      color: '#97a97c'
+    this.selectionMarker = new mapboxgl.Marker({
+      color: '#97a97c',
+      scale: 1.2
     })
       .setLngLat([lng, lat])
       .addTo(this.map);
 
-    if (popupContent) {
-      const popup = new mapboxgl.Popup({ 
-        offset: 25,
-        closeButton: false
-      })
-        .setHTML(`<img src="${popupContent}" style="width: 190px; height: 190px;"></img>`);
-      marker.setPopup(popup);
-    }
-
-    this.markers.push(marker);
+    const popupContent = `https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${imageIndex}.jpg`;
+    const popup = new mapboxgl.Popup({ 
+      offset: 25,
+      closeButton: false
+    })
+      .setHTML(`<img src="${popupContent}" style="width: 190px; height: 190px;"></img>`);
+    
+    this.selectionMarker.setPopup(popup);
   }
 
-  clearMarkers(): void {
-    this.markers.forEach(marker => marker.remove());
-    this.markers = [];
+  private clearSelectionMarker(): void {
+    console.log(this.selectionMarker)
+    if (this.selectionMarker) {
+      this.selectionMarker.remove();
+      this.selectionMarker = null;
+    }
   }
 
   flyTo(lng: number, lat: number, zoom: number = 12): void {
@@ -162,18 +342,5 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (!this.mapInitialized) return 10;
     return this.map.getZoom();
   }
-
-  fitToMarkers(): void {
-    if (!this.mapInitialized || this.markers.length === 0) return;
-    
-    const bounds = new mapboxgl.LngLatBounds();
-    this.markers.forEach(marker => {
-      bounds.extend(marker.getLngLat());
-    });
-    
-    this.map.fitBounds(bounds, {
-      padding: 50,
-      maxZoom: 15
-    });
-  }
 }
+

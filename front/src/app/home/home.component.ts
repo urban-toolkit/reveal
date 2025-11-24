@@ -187,7 +187,6 @@ export class HomeComponent implements AfterViewInit {
       schema.textsSimilarities = res.texts.similarities;
       schema.imagesSimilarities = res.images.similarities;
       schema.similarityValue = res.images.similarityValue;
-      schema.locationsData = res.images.locations;
       this.forceGraph.schema = schema;
       this.forceGraph.addNode('searchbar');
       this.imageEmbedding.setupImageEmbedding(res.images);
@@ -198,7 +197,7 @@ export class HomeComponent implements AfterViewInit {
       this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
       this.wordCloud.updateWordCloud(res.texts);
       this.spinner.hide();
-      this.loadMapWithLocations(res.images.locations);
+      this.loadMapWithHeatmap(res.images);
     } else {
       alert("Query empty")
     }
@@ -226,7 +225,7 @@ export class HomeComponent implements AfterViewInit {
         this.imageGallery.tabsCounter = 0;
         this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
         this.wordCloud.updateWordCloud(res.texts);
-        this.loadMapWithLocations(res.images.locations);
+        this.loadMapWithHeatmap(res.images);
       } else {
         alert('Empty result')
       }
@@ -254,17 +253,16 @@ export class HomeComponent implements AfterViewInit {
     schema.textsSimilarities = res.texts.similarities;
     schema.imagesSimilarities = res.images.similarities;
     schema.similarityValue = res.images.similarityValue;
-    schema.locationsData = res.images.locations;
     this.forceGraph.schema = schema;
     this.forceGraph.addNode('interface');
     this.imageEmbedding.setupImageEmbedding(res.images);
     this.textEmbedding.setupTextEmbedding(res.texts);
     this.combinedEmbedding.setupCombinedEmbedding(res.images, res.texts);
     this.imageGallery.updateImageGallery(res.images);
-      this.imageGallery.tabsCounter = 0;
+    this.imageGallery.tabsCounter = 0;
     this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
     this.wordCloud.updateWordCloud(res.texts);
-    this.loadMapWithLocations(res.images.locations);
+    this.loadMapWithHeatmap(res.images);
     this.spinner.hide();
   }
 
@@ -382,7 +380,6 @@ export class HomeComponent implements AfterViewInit {
     this.imageEmbedding.selectedPoints = obj.selectedPointsImages;
     this.imageEmbedding.scatterGl.select(obj.selectedPointsImages);
     this.imageEmbedding.wasCtrlKey = true;
-    
     this.textEmbedding.colorPoints();
     this.imageEmbedding.colorPoints();
   }
@@ -390,6 +387,12 @@ export class HomeComponent implements AfterViewInit {
   toggleEmbeddingImageFromGallery(obj: any) {
     this.imageEmbedding.toggleImages(obj);
     this.combinedEmbedding.toggleImages(obj);
+
+    if (obj) {
+    this.map.toggleSelectionMarker(obj, true);
+    } else {
+      this.map.toggleSelectionMarker(0, false);
+    }
   }
 
   toggleEmbeddingTextFromCloud(obj: any) {
@@ -667,27 +670,17 @@ export class HomeComponent implements AfterViewInit {
     this.displayCombinedComponent = event;
   }
 
-  loadMapWithLocations(locations: any[]): void {
-    const validLocations = locations.filter(loc => 
-      loc.lat !== null && 
-      loc.lon !== null && 
-      !isNaN(loc.lat) && 
-      !isNaN(loc.lon)
-    );
+  loadMapWithHeatmap(imageData: any): void {
+    const locations = imageData.locations;
+    const imageLabels = imageData.labels;
     
-    if (validLocations.length === 0) {
+    if (locations.length === 0) {
       this.map.loadMap();
       return;
     }
     
-    const centerLat = validLocations.reduce((sum, loc) => sum + loc.lat, 0) / validLocations.length;
-    const centerLon = validLocations.reduce((sum, loc) => sum + loc.lon, 0) / validLocations.length;
-    
-    this.map.loadMap(centerLon, centerLat, 10);
-    
-    validLocations.forEach((loc, index) => {
-      const popupContent = `https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${index}.jpg`;
-      this.map.addMarker(loc.lon, loc.lat, popupContent);
-    });
+    this.map.loadHeatmapData(locations, imageLabels);
   }
+  //`https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${index}.jpg`;
+
 }
