@@ -265,23 +265,34 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.heatmapData = null;
   }
 
-  public toggleSelectionMarker(imageIndex: any, show: boolean): void {
+  public toggleSelectionMarker(imageIndex: any, show: boolean, from: string): void {
     this.clearSelectionMarkers();
 
-    if (!show || !imageIndex || !imageIndex.labels) return;
+    if(from == "imageGallery") {
+        for (let i = 0; i < imageIndex.labels.length; i++) {
+        const label = imageIndex.labels[i];
+        const location = this.locationIndexMap.get(label);
 
-    console.log("HEYA", imageIndex);
+        if (!location) {
+          console.warn(`No location data for image index ${label}`);
+          continue;
+        }
 
-    for (let i = 0; i < imageIndex.labels.length; i++) {
-      const label = imageIndex.labels[i];
-      const location = this.locationIndexMap.get(label);
-
-      if (!location) {
-        console.warn(`No location data for image index ${label}`);
-        continue;
+        this.addSelectionMarker(location.lon, location.lat, label);
       }
+    } else {
+      console.log(imageIndex)
+    for (let i = 0; i < imageIndex.length; i++) {
+        const label = imageIndex[i];
+        const location = this.locationIndexMap.get(label);
 
-      this.addSelectionMarker(location.lon, location.lat, label);
+        if (!location) {
+          console.warn(`No location data for image index ${label}`);
+          continue;
+        }
+
+        this.addSelectionMarker(location.lon, location.lat, label);
+      }
     }
   }
 

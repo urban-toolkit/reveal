@@ -388,7 +388,7 @@ export class HomeComponent implements AfterViewInit {
   toggleEmbeddingImageFromGallery(obj: any) {
     this.imageEmbedding.toggleImages(obj);
     this.combinedEmbedding.toggleImages(obj);
-    this.map.toggleSelectionMarker(obj, true);
+    this.map.toggleSelectionMarker(obj, true, "imageGallery");
   }
 
   toggleEmbeddingTextFromCloud(obj: any) {
@@ -635,6 +635,7 @@ export class HomeComponent implements AfterViewInit {
 
   highlightImageGallery(points: any) {
     this.imageGallery.selectImages(points);
+    this.map.toggleSelectionMarker(this.imageGallery.selectedIndices, true, "embedding");
   }
 
   highlightWordCloud(points: any) {
