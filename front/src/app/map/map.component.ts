@@ -15,7 +15,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   private mapInitialized = false;
   public hasData = false;
   private pendingInit = false;
-  private selectionMarker: mapboxgl.Marker | null = null;
+
+  private selectionMarkers: mapboxgl.Marker[] = [];
+
   private heatmapData: any = null;
   private locationIndexMap: Map<number, { lon: number, lat: number }> = new Map();
 
@@ -67,7 +69,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.map.on('load', () => {
       const logo = this.mapContainer.nativeElement.querySelector('.mapboxgl-ctrl-logo');
       if (logo) {
-        logo.style.display = 'none';
+        (logo as HTMLElement).style.display = 'none';
       }
       
       this.map.resize();
@@ -83,7 +85,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public loadMap(centerLng?: number, centerLat?: number, zoom?: number): void {
     this.hasData = true;
-    this.clearSelectionMarker();
+    this.clearSelectionMarkers();
     
     setTimeout(() => {
       if (!this.mapInitialized) {
@@ -107,7 +109,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public clear(): void {
     this.hasData = false;
-    this.clearSelectionMarker();
+    this.clearSelectionMarkers();
     this.clearHeatmap();
     this.locationIndexMap.clear();
   }
@@ -178,7 +180,6 @@ export class MapComponent implements OnInit, AfterViewInit {
           15,
           3
         ],
-        
         'heatmap-color': [
           'interpolate',
           ['linear'],
@@ -265,33 +266,35 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public toggleSelectionMarker(imageIndex: any, show: boolean): void {
-    this.clearSelectionMarker();
-    
-    console.log("HEYA", imageIndex)
+    this.clearSelectionMarkers();
 
-    for(let i = 0; i < imageIndex.labels.length; i++) {
-      
-      const location = this.locationIndexMap.get(imageIndex.labels[i]);
+    if (!show || !imageIndex || !imageIndex.labels) return;
+
+    console.log("HEYA", imageIndex);
+
+    for (let i = 0; i < imageIndex.labels.length; i++) {
+      const label = imageIndex.labels[i];
+      const location = this.locationIndexMap.get(label);
 
       if (!location) {
-        console.warn(`No location data for image index ${imageIndex.labels[i]}`);
-        return;
+        console.warn(`No location data for image index ${label}`);
+        continue;
       }
 
-      this.showSelectionMarker(location.lon, location.lat, imageIndex.labels[i]);
+      this.addSelectionMarker(location.lon, location.lat, label);
     }
   }
 
-  private showSelectionMarker(lng: number, lat: number, imageIndex: number): void {
+  private addSelectionMarker(lng: number, lat: number, imageIndex: number): void {
     if (!this.mapInitialized) {
       setTimeout(() => {
         this.initializeMap();
-        setTimeout(() => this.showSelectionMarker(lng, lat, imageIndex), 100);
+        setTimeout(() => this.addSelectionMarker(lng, lat, imageIndex), 100);
       }, 100);
       return;
     }
 
-    this.selectionMarker = new mapboxgl.Marker({
+    const marker = new mapboxgl.Marker({
       color: '#97a97c',
       scale: 1.2
     })
@@ -305,15 +308,16 @@ export class MapComponent implements OnInit, AfterViewInit {
     })
       .setHTML(`<img src="${popupContent}" style="width: 190px; height: 190px;"></img>`);
     
-    this.selectionMarker.setPopup(popup);
+    marker.setPopup(popup);
+
+    this.selectionMarkers.push(marker);
   }
 
-  private clearSelectionMarker(): void {
-    console.log(this.selectionMarker)
-    if (this.selectionMarker) {
-      this.selectionMarker.remove();
-      this.selectionMarker = null;
-    }
+  public clearSelectionMarkers(): void {
+    if (!this.selectionMarkers.length) return;
+
+    this.selectionMarkers.forEach(marker => marker.remove());
+    this.selectionMarkers = [];
   }
 
   flyTo(lng: number, lat: number, zoom: number = 12): void {
@@ -343,4 +347,3 @@ export class MapComponent implements OnInit, AfterViewInit {
     return this.map.getZoom();
   }
 }
-

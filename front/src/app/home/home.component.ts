@@ -317,6 +317,7 @@ export class HomeComponent implements AfterViewInit {
   }
 
   onSelectionsClear() {
+    this.map.clearSelectionMarkers();
       if(this.imageEmbedding.scatterGl) {
         this.highlightImageGallery([]);
         this.imageEmbedding.selectedPoints = [];
@@ -387,12 +388,7 @@ export class HomeComponent implements AfterViewInit {
   toggleEmbeddingImageFromGallery(obj: any) {
     this.imageEmbedding.toggleImages(obj);
     this.combinedEmbedding.toggleImages(obj);
-
-    if (obj) {
     this.map.toggleSelectionMarker(obj, true);
-    } else {
-      this.map.toggleSelectionMarker(0, false);
-    }
   }
 
   toggleEmbeddingTextFromCloud(obj: any) {
