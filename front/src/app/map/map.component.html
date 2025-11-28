@@ -1,1 +1,28 @@
-<div *ngIf="hasData" class="map-container" #mapContainer></div>
+<div *ngIf="hasData" class="map-container" #mapContainer>
+  <div class="polygon-controls">
+    <button 
+      class="polygon-btn" 
+      [class.active]="isInDrawMode()"
+      (click)="toggleDrawMode()"
+      title="Draw Polygon (Toggle)"
+      aria-label="Draw Polygon">
+      <i class="fas fa-draw-polygon"></i>
+    </button>
+    
+    <button 
+      class="polygon-btn" 
+      (click)="deleteSelectedPolygon()"
+      title="Delete Selected Polygon"
+      aria-label="Delete Selected Polygon">
+      <i class="fas fa-eraser"></i>
+    </button>
+    
+    <button 
+      class="polygon-btn clear-btn" 
+      (click)="clearAllPolygons()"
+      title="Clear All Polygons"
+      aria-label="Clear All Polygons">
+      <i class="fas fa-trash"></i>
+    </button>
+  </div>
+</div>

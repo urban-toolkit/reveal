@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
+import MapboxDraw from '@mapbox/mapbox-gl-draw';
 
 @Component({
   selector: 'app-map',
@@ -10,6 +11,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   @ViewChild('mapContainer', { static: false }) private mapContainer!: ElementRef;
 
   private map!: mapboxgl.Map;
+  private draw!: MapboxDraw;
   private accessToken = 'pk.eyJ1IjoibGVvdnNmIiwiYSI6ImNqZDI0NjFmajBwaWwycXBheDg1NHFiczEifQ.7oGXJmnvyx-9ahJw4n9VSg';
   private style = 'mapbox://styles/leovsf/cmi7uzuzt002e01qmdkd15it1';
   private mapInitialized = false;
@@ -17,9 +19,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   private pendingInit = false;
 
   private selectionMarkers: mapboxgl.Marker[] = [];
-
   private heatmapData: any = null;
   private locationIndexMap: Map<number, { lon: number, lat: number }> = new Map();
+
+  private isDrawingMode = false;
+  public polygons: any[] = [];
 
   constructor() { }
 
@@ -63,7 +67,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       doubleClickZoom: true,
       touchZoomRotate: true,
       touchPitch: true,
-      projection: "mercator"
+      projection: 'mercator'
     });
 
     this.map.on('load', () => {
@@ -77,11 +81,116 @@ export class MapComponent implements OnInit, AfterViewInit {
       if (this.heatmapData) {
         this.addHeatmapLayer();
       }
+      
+      this.initializeDrawControl();
     });
 
     this.mapInitialized = true;
     this.pendingInit = false;
   }
+
+  private initializeDrawControl(): void {
+    if (this.draw) return;
+    
+    this.draw = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: {},
+      defaultMode: 'simple_select'
+    });
+    
+    this.map.addControl(this.draw, 'top-right');
+
+    this.map.on('draw.create', (e) => this.onPolygonCreated(e));
+    this.map.on('draw.delete', (e) => this.onPolygonDeleted(e));
+    this.map.on('draw.update', (e) => this.onPolygonUpdated(e));
+  }
+
+
+  public toggleDrawMode(): void {
+    if (!this.mapInitialized || !this.draw) return;
+
+    this.isDrawingMode = !this.isDrawingMode;
+    
+    if (this.isDrawingMode) {
+      this.draw.changeMode('draw_polygon');
+    } else {
+      this.draw.changeMode('simple_select');
+    }
+  }
+
+  public deleteSelectedPolygon(): void {
+    if (!this.mapInitialized || !this.draw) return;
+
+    this.isDrawingMode = false;
+
+    const selectedFeatures = this.draw.getSelected();
+    
+    if (selectedFeatures.features.length > 0) {
+      const selectedIds = selectedFeatures.features.map((f: any) => f.id);
+      selectedIds.forEach((id: string) => {
+        this.draw.delete(id);
+      });
+      
+      console.log(`Deleted ${selectedIds.length} selected polygon(s)`);
+    } else {
+      console.log('No polygon selected for deletion');
+    }
+  }
+
+  public clearAllPolygons(): void {
+    if (!this.mapInitialized || !this.draw) return;
+
+    this.draw.deleteAll();
+    
+    this.polygons = [];
+    
+    this.isDrawingMode = false;
+    this.draw.changeMode('simple_select');
+  }
+
+  private onPolygonCreated(e: any): void {
+    const features = e.features;
+    features.forEach((feature: any) => {
+      this.polygons.push(feature);
+    });
+    
+    console.log('Polygon created:', features);
+    console.log('Total polygons:', this.polygons.length);
+  }
+
+  private onPolygonDeleted(e: any): void {
+    const deletedIds = e.features.map((f: any) => f.id);
+    this.polygons = this.polygons.filter(p => !deletedIds.includes(p.id));
+    
+    console.log('Polygon deleted');
+    console.log('Total polygons:', this.polygons.length);
+  }
+
+  private onPolygonUpdated(e: any): void {
+    const updatedFeatures = e.features;
+    updatedFeatures.forEach((updated: any) => {
+      const index = this.polygons.findIndex(p => p.id === updated.id);
+      if (index !== -1) {
+        this.polygons[index] = updated;
+      }
+    });
+    
+    console.log('Polygon updated');
+  }
+
+  public getPolygons(): any[] {
+    return this.polygons;
+  }
+
+  public getDrawnFeatures(): any {
+    if (!this.mapInitialized || !this.draw) return null;
+    return this.draw.getAll();
+  }
+
+  public isInDrawMode(): boolean {
+    return this.isDrawingMode;
+  }
+
 
   public loadMap(centerLng?: number, centerLat?: number, zoom?: number): void {
     this.hasData = true;
@@ -112,9 +221,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.clearSelectionMarkers();
     this.clearHeatmap();
     this.locationIndexMap.clear();
+    this.clearAllPolygons();
   }
 
   public loadHeatmapData(locations: any[], imageLabels: any[]): void {
+    console.log('loadHeatmapData called with', locations.length, 'locations');
+    
     this.locationIndexMap.clear();
     locations.forEach((loc, index) => {
       this.locationIndexMap.set(imageLabels[index], { lon: loc.lon, lat: loc.lat });
@@ -136,18 +248,33 @@ export class MapComponent implements OnInit, AfterViewInit {
       features: features
     };
     
+    console.log('Heatmap data prepared:', this.heatmapData);
+    
     const centerLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
     const centerLon = locations.reduce((sum, loc) => sum + loc.lon, 0) / locations.length;
     
     this.loadMap(centerLon, centerLat, 10);
     
     if (this.mapInitialized && this.map.isStyleLoaded()) {
+      console.log('Map already initialized and style loaded, adding heatmap now');
       this.addHeatmapLayer();
+    } else {
+      console.log('Map not ready yet, heatmap will be added in load event');
     }
   }
 
   private addHeatmapLayer(): void {
-    if (!this.heatmapData || !this.mapInitialized) return;
+    if (!this.heatmapData || !this.mapInitialized) {
+      console.log(
+        'Cannot add heatmap - mapInitialized:',
+        this.mapInitialized,
+        'heatmapData exists:',
+        !!this.heatmapData
+      );
+      return;
+    }
+
+    console.log('Adding heatmap layer with', this.heatmapData.features.length, 'points');
 
     if (this.map.getLayer('heatmap-layer')) {
       this.map.removeLayer('heatmap-layer');
@@ -163,6 +290,21 @@ export class MapComponent implements OnInit, AfterViewInit {
       type: 'geojson',
       data: this.heatmapData
     });
+    console.log('Heatmap source added');
+
+    const colorScale = ['#fee5d9', '#fcae91', '#fb6a4a', '#de2d26', '#a50f15'];
+
+    const layers = this.map.getStyle().layers;
+    let firstSymbolId: string | undefined;
+    
+    if (layers) {
+      for (const layer of layers) {
+        if (layer.type === 'symbol') {
+          firstSymbolId = layer.id;
+          break;
+        }
+      }
+    }
 
     this.map.addLayer({
       id: 'heatmap-layer',
@@ -175,63 +317,50 @@ export class MapComponent implements OnInit, AfterViewInit {
           'interpolate',
           ['linear'],
           ['zoom'],
-          0,
-          1,
-          15,
-          3
+          0, 1,
+          15, 3
         ],
         'heatmap-color': [
           'interpolate',
           ['linear'],
           ['heatmap-density'],
-          0,
-          'rgba(255, 245, 240, 0)',
-          0.2,
-          'rgb(254, 224, 210)',
-          0.4,
-          'rgb(252, 187, 161)',
-          0.6,
-          'rgb(252, 146, 114)',
-          0.8,
-          'rgb(251, 106, 74)',
-          1,
-          'rgb(203, 24, 29)'
+          0, 'rgba(0, 0, 0, 0)',
+          0.2, colorScale[0],
+          0.4, colorScale[1],
+          0.6, colorScale[2],
+          0.8, colorScale[3],
+          1, colorScale[4]
         ],
         'heatmap-radius': [
           'interpolate',
           ['linear'],
           ['zoom'],
-          0,
-          2,
-          15,
-          30
+          0, 2,
+          15, 20
         ],
         'heatmap-opacity': [
           'interpolate',
           ['linear'],
           ['zoom'],
-          12,
-          1,
-          15,
-          0.5
+          7, 1,
+          15, 0.5
         ]
       }
-    });
+    }, firstSymbolId);
+    console.log('Heatmap layer added' + (firstSymbolId ? ' before ' + firstSymbolId : ''));
 
     this.map.addLayer({
       id: 'heatmap-point',
       type: 'circle',
       source: 'heatmap-source',
-      minzoom: 12,
+      minzoom: 13,
       paint: {
         'circle-radius': [
           'interpolate',
           ['linear'],
           ['zoom'],
-          12,
-          2,
-          18,
-          6
+          12, 2,
+          18, 6
         ],
         'circle-color': 'rgb(203, 24, 29)',
         'circle-stroke-color': 'white',
@@ -240,13 +369,12 @@ export class MapComponent implements OnInit, AfterViewInit {
           'interpolate',
           ['linear'],
           ['zoom'],
-          12,
-          0,
-          13,
-          0.8
+          12, 0,
+          13, 0.8
         ]
       }
-    });
+    }, firstSymbolId);
+    console.log('Heatmap point layer added');
   }
 
   private clearHeatmap(): void {
@@ -268,8 +396,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   public toggleSelectionMarker(imageIndex: any, show: boolean, from: string): void {
     this.clearSelectionMarkers();
 
-    if(from == "imageGallery") {
-        for (let i = 0; i < imageIndex.labels.length; i++) {
+    if (from === 'imageGallery') {
+      for (let i = 0; i < imageIndex.labels.length; i++) {
         const label = imageIndex.labels[i];
         const location = this.locationIndexMap.get(label);
 
@@ -281,8 +409,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.addSelectionMarker(location.lon, location.lat, label);
       }
     } else {
-      console.log(imageIndex)
-    for (let i = 0; i < imageIndex.length; i++) {
+      for (let i = 0; i < imageIndex.length; i++) {
         const label = imageIndex[i];
         const location = this.locationIndexMap.get(label);
 
