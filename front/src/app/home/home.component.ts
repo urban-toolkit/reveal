@@ -74,11 +74,12 @@ export class HomeComponent implements AfterViewInit {
   
   ngOnInit(): void {
     this.spinner.show();
-    const userCollection = (JSON.parse(localStorage.getItem('user_collection')!));
-
-    if(userCollection !== null) {
-      this.bucket.userBuckets = (JSON.parse(localStorage.getItem('user_collection')!)).buckets;
-      this.state.savedStates = (JSON.parse(localStorage.getItem('user_collection')!)).states;
+    const userCollectionData = localStorage.getItem('user_collection');
+  
+    if (userCollectionData && userCollectionData !== 'null') {
+      const userCollection = JSON.parse(userCollectionData);
+      this.bucket.userBuckets = userCollection.buckets || [];
+      this.state.savedStates = userCollection.states || [];
       this.bucket.displayInUseBuckets();
       this.bucket.displaySavedBuckets();
     } else {
@@ -188,7 +189,8 @@ export class HomeComponent implements AfterViewInit {
       schema.imagesSimilarities = res.images.similarities;
       schema.similarityValue = res.images.similarityValue;
       this.forceGraph.schema = schema;
-      this.forceGraph.addNode('searchbar');
+      const currentPolygons = this.map.getCurrentPolygons();
+      this.forceGraph.addNode('searchbar', currentPolygons);
       this.imageEmbedding.setupImageEmbedding(res.images);
       this.textEmbedding.setupTextEmbedding(res.texts);
       this.combinedEmbedding.setupCombinedEmbedding(res.images, res.texts);
@@ -229,8 +231,15 @@ export class HomeComponent implements AfterViewInit {
       } else {
         alert('Empty result')
       }
+      const currentNode = this.forceGraph.currentMainNode;
+      if (currentNode && currentNode.polygons) {
+        this.map.loadPolygons(currentNode.polygons);
+      } else {
+        this.map.loadPolygons([]);
+      }
     } else {
       this.resetAll();
+      this.map.loadPolygons([]);
     }
     this.spinner.hide();
   }
@@ -254,7 +263,8 @@ export class HomeComponent implements AfterViewInit {
     schema.imagesSimilarities = res.images.similarities;
     schema.similarityValue = res.images.similarityValue;
     this.forceGraph.schema = schema;
-    this.forceGraph.addNode('interface');
+    const currentPolygons = this.map.getCurrentPolygons();
+    this.forceGraph.addNode('interface', currentPolygons);
     this.imageEmbedding.setupImageEmbedding(res.images);
     this.textEmbedding.setupTextEmbedding(res.texts);
     this.combinedEmbedding.setupCombinedEmbedding(res.images, res.texts);
@@ -680,4 +690,7 @@ export class HomeComponent implements AfterViewInit {
   }
   //`https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${index}.jpg`;
 
+  onPolygonsChanged(polygons: any[]): void {
+    this.forceGraph.updateCurrentNodePolygons(polygons);
+  }
 }

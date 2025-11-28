@@ -27,7 +27,7 @@ export class ForceGraphComponent implements OnInit {
   private draggedNodes = new Set();
   private parentNode = new Set();
   private highlightLinks = new Set();
-  private currentMainNode: any = 0;
+  public currentMainNode: any = 0;
   private snapInDistance: number = 10;
   private dragSourceNode:any = null;
   public BuildSetQuery: BuildSetQuery = new BuildSetQuery();
@@ -138,7 +138,7 @@ export class ForceGraphComponent implements OnInit {
     });
   }
 
-  addNode(from: string) {
+  addNode(from: string, polygons: any [] = []) {
     const schema = this.schema;
     const nodeId = this.nodeId;
     const textsQuery = schema.query[schema.query.length - 1].textsQuery;
@@ -150,6 +150,13 @@ export class ForceGraphComponent implements OnInit {
     const textsIds = schema.textsIds;
     const textsSimilarities = schema.textsSimilarities;
     const locationsData = schema.locationsData;
+
+    let nodePolygons = polygons;
+    if (nodePolygons.length === 0 && this.parentNode.size > 0) {
+      const parentNodeObj: any = this.parentNode.values().next().value;
+      nodePolygons = parentNodeObj.polygons || [];
+    }
+
     this.forceGraphData.nodes.push({id: nodeId,
                                     textsQuery: textsQuery,
                                     imagesQuery: imagesQuery,
@@ -161,6 +168,7 @@ export class ForceGraphComponent implements OnInit {
                                     textsSimilarities: textsSimilarities,
                                     iteractionType: 0,
                                     locationsData: locationsData,
+                                    polygons: nodePolygons,
                                     from: from
                                   });
     if(from == 'interface') {
@@ -248,6 +256,9 @@ export class ForceGraphComponent implements OnInit {
     const locationsData:any = [];
     let queryType;
 
+    const allPolygons: any[] = [];
+    const polygonIds = new Set<string>();
+
     if(type == 'intersection' || type == 'union') {
       nodes.forEach((selectedNode: any) => {
         imagesIds.push(...selectedNode.imagesIds);
@@ -259,6 +270,16 @@ export class ForceGraphComponent implements OnInit {
         similarityValue.push(selectedNode.similarityValue);
         locationsData.push(selectedNode.locationsData);
         queryTypes.push(selectedNode.queryType);
+
+        if (selectedNode.polygons && selectedNode.polygons.length > 0) {
+          selectedNode.polygons.forEach((polygon: any) => {
+            const polygonId = polygon.id || JSON.stringify(polygon.geometry);
+            if (!polygonIds.has(polygonId)) {
+              polygonIds.add(polygonId);
+              allPolygons.push(polygon);
+            }
+          });
+        }
       });
     } else {
       nodes.forEach((selectedNode: any) => {
@@ -271,6 +292,10 @@ export class ForceGraphComponent implements OnInit {
 
       const firstNode = [...nodes][0]
       const secondNode = [...nodes][1]
+
+      if (firstNode.polygons && firstNode.polygons.length > 0) {
+        allPolygons.push(...firstNode.polygons);
+      }
 
       const diffLocationsData: any = [] 
       for(let i  = 0; i < firstNode.locationsData.length; i++) {
@@ -316,18 +341,18 @@ export class ForceGraphComponent implements OnInit {
       iteractionType = 3;
       this.BuildSetQuery.setType = 'difference'
     }
-    this.requestNewSet(nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData);
+    this.requestNewSet(nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData, allPolygons);
   }
 
-  async requestNewSet(nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any) {
+  async requestNewSet(nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any, inheritedPolygons: any[]) {
     const res = await this.api.buildSet(this.BuildSetQuery);
     if(similarityValue.length && similarityValue.length > 1) {
       similarityValue = similarityValue.flat();
     }
-    this.createLinks(res, nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData);
+    this.createLinks(res, nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData, inheritedPolygons);
   }
 
-  async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any) {
+  async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any, inheritedPolygons: any[]) {
     const imagesIds = res.images.labels;
     const textsIds = res.texts.labels;
     const imagesSimilarities = res.images.similarities;
@@ -347,6 +372,7 @@ export class ForceGraphComponent implements OnInit {
                                     textsSimilarities: textsSimilarities, 
                                     iteractionType: iteractionType,
                                     locationsData: locationsData,
+                                    polygons: inheritedPolygons,
                                     from: 'set'
                                   });
     
@@ -565,4 +591,12 @@ export class ForceGraphComponent implements OnInit {
       }
     }
   }
+
+  public updateCurrentNodePolygons(polygons: any[]): void {
+  if (this.parentNode.size > 0) {
+    const currentNode: any = this.parentNode.values().next().value;
+    currentNode.polygons = polygons;
+    console.log(`Updated node ${currentNode.id} with ${polygons.length} polygons`);
+  }
+}
 }

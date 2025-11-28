@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, Output, EventEmitter } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 
@@ -9,6 +9,8 @@ import MapboxDraw from '@mapbox/mapbox-gl-draw';
 })
 export class MapComponent implements OnInit, AfterViewInit {
   @ViewChild('mapContainer', { static: false }) private mapContainer!: ElementRef;
+
+  @Output() polygonsChanged = new EventEmitter<any[]>();
 
   private map!: mapboxgl.Map;
   private draw!: MapboxDraw;
@@ -156,6 +158,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     console.log('Polygon created:', features);
     console.log('Total polygons:', this.polygons.length);
+    this.polygonsChanged.emit(this.polygons);
   }
 
   private onPolygonDeleted(e: any): void {
@@ -164,6 +167,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     console.log('Polygon deleted');
     console.log('Total polygons:', this.polygons.length);
+
+    this.polygonsChanged.emit(this.polygons);
   }
 
   private onPolygonUpdated(e: any): void {
@@ -176,6 +181,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
     
     console.log('Polygon updated');
+
+    this.polygonsChanged.emit(this.polygons);
   }
 
   public getPolygons(): any[] {
@@ -484,4 +491,40 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (!this.mapInitialized) return 10;
     return this.map.getZoom();
   }
+
+public loadPolygons(polygons: any[]): void {
+  if (!this.mapInitialized || !this.draw) {
+    setTimeout(() => this.loadPolygons(polygons), 100);
+    return;
+  }
+
+  this.draw.deleteAll();
+  this.polygons = [];
+
+  if (!polygons || polygons.length === 0) {
+    return;
+  }
+
+  polygons.forEach((polygon: any) => {
+    const ids = this.draw.add(polygon);
+    
+    if (ids && ids.length > 0) {
+      const addedFeature = this.draw.get(ids[0]);
+      if (addedFeature) {
+        this.polygons.push(addedFeature);
+      }
+    }
+  });
+
+  console.log(`Loaded ${this.polygons.length} polygons`);
+}
+
+public getCurrentPolygons(): any[] {
+  return this.polygons.map(p => ({
+    ...p,
+    type: p.type,
+    geometry: p.geometry,
+    properties: p.properties || {}
+  }));
+}
 }

@@ -12,23 +12,35 @@ import { take } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class StateService {
-  public userUid = JSON.parse(localStorage.getItem('user')!).uid;
+  public userUid: string = '';
   public userStates: BehaviorSubject<any> = new BehaviorSubject({});
 
-  constructor(public afs: AngularFirestore) { }
+  constructor(public afs: AngularFirestore) {
+    const user = localStorage.getItem('user');
+    if (user && user !== 'null') {
+      this.userUid = JSON.parse(user).uid;
+    }
+  }
 
   async saveUserStates(name: string, forceGraphData: any) {
-    //salva se nao tem state salvo
-
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
-    //remove campo undefined
     forceGraphData.nodes.forEach((node: any) => { node.fy = 0 });
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
     
     const links: any = [];
     for(let i = 0; i < forceGraphData.links.length; i++) {
@@ -52,14 +64,24 @@ export class StateService {
   }
 
   async updateUserStates(name: string, forceGraphData: any) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
-    //remove campo undefined
     forceGraphData.nodes.forEach((node: any) => { node.fy = 0 });
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     const links: any = [];
     for(let i = 0; i < forceGraphData.links.length; i++) {
@@ -85,13 +107,23 @@ export class StateService {
   }
 
   async destroyState(stateId: number) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     for(let i = 0; i < userData.states.length; i++) {
       if(userData.states[i].id == stateId) {

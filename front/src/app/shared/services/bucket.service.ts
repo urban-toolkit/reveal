@@ -12,19 +12,34 @@ import { take } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class BucketService {
-  public userUid = JSON.parse(localStorage.getItem('user')!).uid;
+  public userUid: string = '';
   public userBuckets: BehaviorSubject<any> = new BehaviorSubject({});
 
-  constructor(public afs: AngularFirestore) { }
+  constructor(public afs: AngularFirestore) {
+    const user = localStorage.getItem('user');
+    if (user && user !== 'null') {
+      this.userUid = JSON.parse(user).uid;
+    }
+  }
 
   async updateUserBuckets(name: string) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     const numberOfAddedBuckets = userData.numberOfAddedBuckets + 1;
     userData.numberOfAddedBuckets = numberOfAddedBuckets;
@@ -46,13 +61,23 @@ export class BucketService {
 
 
   async saveUserBucket(bucketId: number) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     for(let i = 0; i < userData.buckets.length; i++) {
       if(userData.buckets[i].id == bucketId) userData.buckets[i].isSaved = 1;
@@ -64,14 +89,23 @@ export class BucketService {
   }
 
   async closeUserBucket(bucketId: number) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
-
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
     for(let i = 0; i < userData.buckets.length; i++) {
       if(userData.buckets[i].id == bucketId) userData.buckets[i].inUse = 0;
     }
@@ -82,13 +116,23 @@ export class BucketService {
   }
 
   async destroyUserBucket(bucketId: number) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     for(let i = 0; i < userData.buckets.length; i++) {
       if(userData.buckets[i].id == bucketId) {
@@ -102,13 +146,23 @@ export class BucketService {
   }
 
   async openUserBucket(bucketId: number) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     for(let i = 0; i < userData.buckets.length; i++) {
       if(userData.buckets[i].id == bucketId) {
@@ -122,13 +176,23 @@ export class BucketService {
   }
 
   async addImageToBucket(bucketId: number, imageUrl: string) {
-    this.userUid = JSON.parse(localStorage.getItem('user')!).uid;
+    const user = localStorage.getItem('user');
+    if (!user || user === 'null') {
+      console.error('No user logged in');
+      return;
+    }
+    this.userUid = JSON.parse(user).uid;
 
     const userRef: AngularFirestoreDocument<any> = this.afs.doc(
       `users_collection/${this.userUid}`
     );
 
-    const userData = JSON.parse(localStorage.getItem('user_collection')!);
+    const userCollectionData = localStorage.getItem('user_collection');
+    if (!userCollectionData || userCollectionData === 'null') {
+      console.error('No user collection data found');
+      return;
+    }
+    const userData = JSON.parse(userCollectionData);
 
     for(let i = 0; i < userData.buckets.length; i++) {
       if(userData.buckets[i].id == bucketId) userData.buckets[i].imageUrls.push(imageUrl);

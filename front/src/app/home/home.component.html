@@ -164,7 +164,9 @@
             ></app-force-graph>
         </div>
         <div class="map-wrapper">
-            <app-map></app-map>
+            <app-map 
+            #mapComponent
+            (polygonsChanged)="onPolygonsChanged($event)"></app-map>
         </div>  
     </div>
     <ul id="contextmenu-force-graph"></ul>
