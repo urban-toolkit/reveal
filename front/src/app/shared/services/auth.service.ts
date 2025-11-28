@@ -190,6 +190,16 @@ export class AuthService {
     const attemptLoad = (retries = 3) => {
       userRef.valueChanges().pipe(take(1)).subscribe(res => {
         if (res) {
+          if (res.states && Array.isArray(res.states)) {
+            res.states = res.states.map((state: any) => ({
+              ...state,
+              nodes: state.nodes ? state.nodes.map((node: any) => ({
+                ...node,
+                polygons: node.polygons ? (typeof node.polygons === 'string' ? JSON.parse(node.polygons) : node.polygons) : []
+              })) : []
+            }));
+          }
+          
           this.setData(res);
           userRef.set(res);
           this.userCollection.next(res);
