@@ -40,7 +40,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   private initializeMap(): void {
-    if (this.mapInitialized) return;
+    if (this.mapInitialized) {
+      console.log('Map already initialized, skipping');
+      return;
+    }
     
     if (!this.mapContainer || !this.mapContainer.nativeElement) {
       this.pendingInit = true;
@@ -53,6 +56,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       setTimeout(() => this.initializeMap(), 100);
       return;
     }
+    
+    console.log('Creating new Mapbox instance');
     
     this.map = new mapboxgl.Map({
       container: this.mapContainer.nativeElement,
@@ -73,6 +78,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
 
     this.map.on('load', () => {
+      console.log('Map load event fired');
+      
       const logo = this.mapContainer.nativeElement.querySelector('.mapboxgl-ctrl-logo');
       if (logo) {
         (logo as HTMLElement).style.display = 'none';
@@ -81,6 +88,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.map.resize();
       
       if (this.heatmapData) {
+        console.log('Adding heatmap from pending data');
         this.addHeatmapLayer();
       }
       
@@ -89,6 +97,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.mapInitialized = true;
     this.pendingInit = false;
+    
+    console.log('Map initialization complete');
   }
 
   private initializeDrawControl(): void {
@@ -200,16 +210,30 @@ export class MapComponent implements OnInit, AfterViewInit {
 
 
   public loadMap(centerLng?: number, centerLat?: number, zoom?: number): void {
+    console.log('loadMap called', { 
+      centerLng, 
+      centerLat, 
+      zoom, 
+      hasData: this.hasData, 
+      mapInitialized: this.mapInitialized 
+    });
+    
     this.hasData = true;
     this.clearSelectionMarkers();
     
     setTimeout(() => {
       if (!this.mapInitialized) {
+        console.log('Map not initialized, will create new instance');
+        this.initializeMap();
+      } else if (!this.map) {
+        console.warn('Map instance missing despite being initialized - resetting');
+        this.mapInitialized = false;
         this.initializeMap();
       }
       
       setTimeout(() => {
-        if (this.mapInitialized) {
+        if (this.mapInitialized && this.map) {
+          console.log('Map ready, resizing and centering');
           this.map.resize();
           
           if (centerLng !== undefined && centerLat !== undefined) {
@@ -218,18 +242,38 @@ export class MapComponent implements OnInit, AfterViewInit {
               this.map.setZoom(zoom);
             }
           }
+        } else {
+          console.error('Map failed to initialize properly');
         }
       }, 100);
     }, 100);
   }
 
   public clear(): void {
-    this.hasData = false;
-    this.clearSelectionMarkers();
-    this.clearHeatmap();
-    this.locationIndexMap.clear();
-    this.clearAllPolygons();
+  console.log('Map clear called');
+  
+  if (this.mapInitialized && this.map) {
+    console.log('Removing existing map instance');
+    
+    if (this.draw) {
+      this.map.removeControl(this.draw);
+      this.draw = null as any;
+    }
+    
+    this.map.remove();
+    this.map = null as any;
+    this.mapInitialized = false;
   }
+  
+  this.hasData = false;
+  this.clearSelectionMarkers();
+  this.clearHeatmap();
+  this.locationIndexMap.clear();
+  this.polygons = [];
+  this.isDrawingMode = false;
+  
+  console.log('Map cleared and destroyed');
+}
 
   public loadHeatmapData(locations: any[], imageLabels: any[]): void {
     console.log('loadHeatmapData called with', locations.length, 'locations');
@@ -262,12 +306,17 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     this.loadMap(centerLon, centerLat, 10);
     
-    if (this.mapInitialized && this.map.isStyleLoaded()) {
-      console.log('Map already initialized and style loaded, adding heatmap now');
-      this.addHeatmapLayer();
-    } else {
-      console.log('Map not ready yet, heatmap will be added in load event');
-    }
+    const waitForMap = () => {
+      if (this.mapInitialized && this.map && this.map.isStyleLoaded()) {
+        console.log('Map ready, adding heatmap layer');
+        this.addHeatmapLayer();
+      } else {
+        console.log('Waiting for map to be ready...');
+        setTimeout(waitForMap, 50);
+      }
+    };
+    
+    setTimeout(waitForMap, 100);
   }
 
   private addHeatmapLayer(): void {
@@ -385,16 +434,26 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   private clearHeatmap(): void {
-    if (!this.mapInitialized) return;
+    if (!this.mapInitialized || !this.map) {
+      console.log('Cannot clear heatmap - map not initialized');
+      this.heatmapData = null;
+      return;
+    }
 
-    if (this.map.getLayer('heatmap-layer')) {
-      this.map.removeLayer('heatmap-layer');
-    }
-    if (this.map.getLayer('heatmap-point')) {
-      this.map.removeLayer('heatmap-point');
-    }
-    if (this.map.getSource('heatmap-source')) {
-      this.map.removeSource('heatmap-source');
+    console.log('Clearing heatmap layers');
+
+    try {
+      if (this.map.getLayer('heatmap-layer')) {
+        this.map.removeLayer('heatmap-layer');
+      }
+      if (this.map.getLayer('heatmap-point')) {
+        this.map.removeLayer('heatmap-point');
+      }
+      if (this.map.getSource('heatmap-source')) {
+        this.map.removeSource('heatmap-source');
+      }
+    } catch (error) {
+      console.error('Error clearing heatmap:', error);
     }
     
     this.heatmapData = null;
@@ -494,29 +553,38 @@ export class MapComponent implements OnInit, AfterViewInit {
 
 public loadPolygons(polygons: any[]): void {
   if (!this.mapInitialized || !this.draw) {
+    console.log('Map not ready for polygons, waiting...');
     setTimeout(() => this.loadPolygons(polygons), 100);
     return;
   }
+
+  console.log(`Loading ${polygons.length} polygons into map`);
 
   this.draw.deleteAll();
   this.polygons = [];
 
   if (!polygons || polygons.length === 0) {
+    console.log('No polygons to load');
     return;
   }
 
   polygons.forEach((polygon: any) => {
-    const ids = this.draw.add(polygon);
-    
-    if (ids && ids.length > 0) {
-      const addedFeature = this.draw.get(ids[0]);
-      if (addedFeature) {
-        this.polygons.push(addedFeature);
+    try {
+      const ids = this.draw.add(polygon);
+      
+      if (ids && ids.length > 0) {
+        const addedFeature = this.draw.get(ids[0]);
+        if (addedFeature) {
+          this.polygons.push(addedFeature);
+        }
       }
+    } catch (error) {
+      console.error('Error adding polygon:', error, polygon);
     }
   });
 
-  console.log(`Loaded ${this.polygons.length} polygons`);
+  console.log(`Successfully loaded ${this.polygons.length} polygons`);
+  this.polygonsChanged.emit(this.polygons);
 }
 
 public getCurrentPolygons(): any[] {
