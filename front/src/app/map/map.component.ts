@@ -158,13 +158,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     this.isDrawingMode = false;
     this.draw.changeMode('simple_select');
+
+    this.polygonsChanged.emit(this.polygons);
   }
+
 
   private onPolygonCreated(e: any): void {
     const features = e.features;
     features.forEach((feature: any) => {
       this.polygons.push(feature);
     });
+
+    this.isDrawingMode = false;
     
     console.log('Polygon created:', features);
     console.log('Total polygons:', this.polygons.length);
@@ -250,30 +255,34 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public clear(): void {
-  console.log('Map clear called');
-  
-  if (this.mapInitialized && this.map) {
-    console.log('Removing existing map instance');
+    console.log('Map clear called');
     
-    if (this.draw) {
-      this.map.removeControl(this.draw);
-      this.draw = null as any;
+    if (this.mapInitialized && this.map) {
+      console.log('Removing existing map instance');
+      
+      if (this.draw) {
+        this.map.removeControl(this.draw);
+        this.draw = null as any;
+      }
+      
+      this.map.remove();
+      this.map = null as any;
+      this.mapInitialized = false;
     }
     
-    this.map.remove();
-    this.map = null as any;
-    this.mapInitialized = false;
+    this.hasData = false;
+    this.clearSelectionMarkers();
+    this.clearHeatmap();
+    this.locationIndexMap.clear();
+    this.polygons = [];
+    this.isDrawingMode = false;
+
+    this.polygonsChanged.emit(this.polygons);
+    
+    console.log('Map cleared and destroyed');
   }
-  
-  this.hasData = false;
-  this.clearSelectionMarkers();
-  this.clearHeatmap();
-  this.locationIndexMap.clear();
-  this.polygons = [];
-  this.isDrawingMode = false;
-  
-  console.log('Map cleared and destroyed');
-}
+
+
 
   public loadHeatmapData(locations: any[], imageLabels: any[]): void {
     console.log('loadHeatmapData called with', locations.length, 'locations');
@@ -587,12 +596,12 @@ public loadPolygons(polygons: any[]): void {
   this.polygonsChanged.emit(this.polygons);
 }
 
-public getCurrentPolygons(): any[] {
-  return this.polygons.map(p => ({
-    ...p,
-    type: p.type,
-    geometry: p.geometry,
-    properties: p.properties || {}
-  }));
-}
+  public getCurrentPolygons(): any[] {
+    return this.polygons.map(p => ({
+      ...p,
+      type: p.type,
+      geometry: p.geometry,
+      properties: p.properties || {}
+    }));
+  }
 }

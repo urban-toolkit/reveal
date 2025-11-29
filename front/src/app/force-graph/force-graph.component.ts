@@ -178,19 +178,22 @@ export class ForceGraphComponent implements OnInit {
       from: from
     });
     
-    if(from == 'interface') {
+    if (from == 'interface') {
       if (this.parentNode.size !== 0) {
         //@ts-ignore
-        this.forceGraphData.links.push({source: this.parentNode.values().next().value.id, target: nodeId})
+        this.forceGraphData.links.push({ source: this.parentNode.values().next().value.id, target: nodeId });
       }
     }
     
+    const newNode = this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1];
     this.parentNode.clear();
-    this.parentNode.add(this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1]);
+    this.parentNode.add(newNode);
+    this.currentMainNode = newNode;
 
     this.forceGraph.graphData(this.forceGraphData);
     this.nodeId += 1;
   }
+
 
   reset() {
     this.nodeId = 0;
@@ -361,8 +364,8 @@ export class ForceGraphComponent implements OnInit {
   }
 
   async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, 
-                  queryType: any, similarityValue: any, iteractionType: number, 
-                  locationsData: any, inheritedPolygons: any[]) {
+                    queryType: any, similarityValue: any, iteractionType: number, 
+                    locationsData: any, inheritedPolygons: any[]) {
     const imagesIds = res.images.labels;
     const textsIds = res.texts.labels;
     const imagesSimilarities = res.images.similarities;
@@ -395,15 +398,20 @@ export class ForceGraphComponent implements OnInit {
       from: 'set'
     });
     
+    const newNode = this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1];
     this.parentNode.clear();
-    this.parentNode.add(this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1]);
+    this.parentNode.add(newNode);
+    this.currentMainNode = newNode;
+
     this.selectedNodes.forEach((selectedNode: any) => {
-      this.forceGraphData.links.push({source: selectedNode.id, target: nodeId});
+      this.forceGraphData.links.push({ source: selectedNode.id, target: nodeId });
     });
     this.forceGraph.graphData(this.forceGraphData);
     this.nodeId += 1;
     this.selectedNodes.clear();
   }
+
+
 
   openState(state: any) {
     this.resetAll.emit();
@@ -612,12 +620,16 @@ export class ForceGraphComponent implements OnInit {
   }
 
   public updateCurrentNodePolygons(polygons: any[]): void {
-    if (this.parentNode.size > 0) {
-      const currentNode: any = this.parentNode.values().next().value;
-      
-      currentNode.polygons = JSON.parse(JSON.stringify(polygons));
-      
-      console.log(`Updated node ${currentNode.id} with ${polygons.length} polygons`);
+    if (!this.currentMainNode) {
+      console.warn('No currentMainNode set; cannot update polygons');
+      return;
     }
-  }
+
+    this.currentMainNode.polygons = JSON.parse(JSON.stringify(polygons));
+
+    this.parentNode.clear();
+    this.parentNode.add(this.currentMainNode);
+
+    console.log(`Updated node ${this.currentMainNode.id} with ${polygons.length} polygons`);
+}
 }
