@@ -219,6 +219,7 @@ export class HomeComponent implements AfterViewInit {
       this.StateQuery.similarityValue = this.similarityValue;
       this.onSelectionsClear();
       const res = await this.api.getState(this.StateQuery);
+      
       if(res.images.similarities.length > 0 && res.texts.similarities.length > 0) {
         this.imageEmbedding.setupImageEmbedding(res.images);
         this.textEmbedding.setupTextEmbedding(res.texts);
@@ -228,21 +229,25 @@ export class HomeComponent implements AfterViewInit {
         this.coloLegend.updateColorLegend(res.texts.similarities, res.images.similarities);
         this.wordCloud.updateWordCloud(res.texts);
         this.loadMapWithHeatmap(res.images);
+        
         setTimeout(() => {
-        const currentNode = this.forceGraph.currentMainNode;
-        if (currentNode && currentNode.polygons && currentNode.polygons.length > 0) {
-          console.log(`Loading ${currentNode.polygons.length} polygons for node ${currentNode.id}`);
-          this.map.loadPolygons(currentNode.polygons);
-        }
-      }, 300);
+          const currentNode = this.forceGraph.currentMainNode;
+          if (currentNode && currentNode.polygons && currentNode.polygons.length > 0) {
+            console.log(`Loading ${currentNode.polygons.length} polygons for node ${currentNode.id}`);
+            const polygonsCopy = JSON.parse(JSON.stringify(currentNode.polygons));
+            this.map.loadPolygons(polygonsCopy);
+          } else {
+            this.map.loadPolygons([]);
+          }
+        }, 300);
+      } else {
+        alert('Empty result')
+      }
     } else {
-      alert('Empty result')
+      this.resetAll();
     }
-  } else {
-    this.resetAll();
+    this.spinner.hide();
   }
-  this.spinner.hide();
-}
 
   async searchSelected(event: any) {
     this.EmbeddingQuery.queryType = event.queryType;

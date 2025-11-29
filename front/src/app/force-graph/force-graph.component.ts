@@ -138,7 +138,7 @@ export class ForceGraphComponent implements OnInit {
     });
   }
 
-  addNode(from: string, polygons: any [] = []) {
+  addNode(from: string, polygons: any[] = []) {
     const schema = this.schema;
     const nodeId = this.nodeId;
     const textsQuery = schema.query[schema.query.length - 1].textsQuery;
@@ -151,37 +151,45 @@ export class ForceGraphComponent implements OnInit {
     const textsSimilarities = schema.textsSimilarities;
     const locationsData = schema.locationsData;
 
-    let nodePolygons = polygons;
-    if (nodePolygons.length === 0 && this.parentNode.size > 0) {
+    let nodePolygons: any[] = [];
+    
+    if (polygons && polygons.length > 0) {
+      nodePolygons = JSON.parse(JSON.stringify(polygons));
+    } else if (this.parentNode.size > 0) {
       const parentNodeObj: any = this.parentNode.values().next().value;
-      nodePolygons = parentNodeObj.polygons || [];
+      if (parentNodeObj.polygons && parentNodeObj.polygons.length > 0) {
+        nodePolygons = JSON.parse(JSON.stringify(parentNodeObj.polygons));
+      }
     }
 
-    this.forceGraphData.nodes.push({id: nodeId,
-                                    textsQuery: textsQuery,
-                                    imagesQuery: imagesQuery,
-                                    queryType: queryType,
-                                    similarityValue: similarityValue,
-                                    imagesIds: imagesIds,
-                                    imagesSimilarities: imagesSimilarities,
-                                    textsIds: textsIds,
-                                    textsSimilarities: textsSimilarities,
-                                    iteractionType: 0,
-                                    locationsData: locationsData,
-                                    polygons: nodePolygons,
-                                    from: from
-                                  });
+    this.forceGraphData.nodes.push({
+      id: nodeId,
+      textsQuery: textsQuery,
+      imagesQuery: imagesQuery,
+      queryType: queryType,
+      similarityValue: similarityValue,
+      imagesIds: imagesIds,
+      imagesSimilarities: imagesSimilarities,
+      textsIds: textsIds,
+      textsSimilarities: textsSimilarities,
+      iteractionType: 0,
+      locationsData: locationsData,
+      polygons: nodePolygons,
+      from: from
+    });
+    
     if(from == 'interface') {
       if (this.parentNode.size !== 0) {
         //@ts-ignore
         this.forceGraphData.links.push({source: this.parentNode.values().next().value.id, target: nodeId})
       }
     }
+    
     this.parentNode.clear();
     this.parentNode.add(this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1]);
 
     this.forceGraph.graphData(this.forceGraphData);
-    this.nodeId  +=  1;
+    this.nodeId += 1;
   }
 
   reset() {
@@ -352,29 +360,40 @@ export class ForceGraphComponent implements OnInit {
     this.createLinks(res, nodeId, textsQuery, imagesQuery, queryType, similarityValue, iteractionType, locationsData, inheritedPolygons);
   }
 
-  async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, queryType: any, similarityValue: any, iteractionType: number, locationsData: any, inheritedPolygons: any[]) {
+  async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, 
+                  queryType: any, similarityValue: any, iteractionType: number, 
+                  locationsData: any, inheritedPolygons: any[]) {
     const imagesIds = res.images.labels;
     const textsIds = res.texts.labels;
     const imagesSimilarities = res.images.similarities;
     const textsSimilarities = res.texts.similarities;
-    this.embeddingState.emit([imagesIds,
-                              imagesSimilarities,
-                              textsIds,
-                              textsSimilarities]);
-    this.forceGraphData.nodes.push({id: nodeId,
-                                    textsQuery: textsQuery, 
-                                    imagesQuery: imagesQuery, 
-                                    queryType: queryType, 
-                                    similarityValue: similarityValue, 
-                                    imagesIds: imagesIds,
-                                    textsIds: textsIds,
-                                    imagesSimilarities:  imagesSimilarities,
-                                    textsSimilarities: textsSimilarities, 
-                                    iteractionType: iteractionType,
-                                    locationsData: locationsData,
-                                    polygons: inheritedPolygons,
-                                    from: 'set'
-                                  });
+    
+    this.embeddingState.emit([
+      imagesIds,
+      imagesSimilarities,
+      textsIds,
+      textsSimilarities
+    ]);
+    
+    const nodePolygons = inheritedPolygons && inheritedPolygons.length > 0
+      ? JSON.parse(JSON.stringify(inheritedPolygons))
+      : [];
+    
+    this.forceGraphData.nodes.push({
+      id: nodeId,
+      textsQuery: textsQuery, 
+      imagesQuery: imagesQuery, 
+      queryType: queryType, 
+      similarityValue: similarityValue, 
+      imagesIds: imagesIds,
+      textsIds: textsIds,
+      imagesSimilarities: imagesSimilarities,
+      textsSimilarities: textsSimilarities, 
+      iteractionType: iteractionType,
+      locationsData: locationsData,
+      polygons: nodePolygons,
+      from: 'set'
+    });
     
     this.parentNode.clear();
     this.parentNode.add(this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1]);
@@ -593,10 +612,12 @@ export class ForceGraphComponent implements OnInit {
   }
 
   public updateCurrentNodePolygons(polygons: any[]): void {
-  if (this.parentNode.size > 0) {
-    const currentNode: any = this.parentNode.values().next().value;
-    currentNode.polygons = polygons;
-    console.log(`Updated node ${currentNode.id} with ${polygons.length} polygons`);
+    if (this.parentNode.size > 0) {
+      const currentNode: any = this.parentNode.values().next().value;
+      
+      currentNode.polygons = JSON.parse(JSON.stringify(polygons));
+      
+      console.log(`Updated node ${currentNode.id} with ${polygons.length} polygons`);
+    }
   }
-}
 }
