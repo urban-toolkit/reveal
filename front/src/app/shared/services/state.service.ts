@@ -60,7 +60,18 @@ export class StateService {
     const numberOfAddedStates = userData.numberOfAddedStates + 1;
     userData.numberOfAddedStates = numberOfAddedStates;
     userData.states.push(state);
-    userRef.set(userData);
+    
+    // CRITICAL FIX: Serialize ALL states before saving to Firestore to avoid nested array errors
+    // This ensures that any previously loaded states with deserialized polygons get re-serialized
+    const userDataToSave = {
+      ...userData,
+      states: userData.states.map((s: State) => ({
+        ...s,
+        nodes: this.serializePolygons(s.nodes)
+      }))
+    };
+    
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.states;
   }
@@ -101,11 +112,21 @@ export class StateService {
           nodes: serializedNodes,
           links: links
         };
-        userData.states[i] = state 
+        userData.states[i] = state;
       }
     }
 
-    userRef.set(userData);
+    // CRITICAL FIX: Serialize ALL states before saving to Firestore to avoid nested array errors
+    // This ensures that any previously loaded states with deserialized polygons get re-serialized
+    const userDataToSave = {
+      ...userData,
+      states: userData.states.map((s: State) => ({
+        ...s,
+        nodes: this.serializePolygons(s.nodes)
+      }))
+    };
+
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.states;
   }
@@ -135,7 +156,16 @@ export class StateService {
       }
     }
 
-    userRef.set(userData);
+    // CRITICAL FIX: Serialize ALL states before saving to Firestore
+    const userDataToSave = {
+      ...userData,
+      states: userData.states.map((s: State) => ({
+        ...s,
+        nodes: this.serializePolygons(s.nodes)
+      }))
+    };
+
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.states;
   }

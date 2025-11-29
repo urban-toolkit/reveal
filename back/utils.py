@@ -1,12 +1,12 @@
+import clip
+import torch
 import re
 import base64
-from io import BytesIO
-
-import open_clip
-import torch
 from PIL import Image
+from io import BytesIO
 import numpy as np
 import pandas as pd
+
 
 def get_torch_device():
     return "cuda" if torch.cuda.is_available() else "cpu"
@@ -14,54 +14,36 @@ def get_torch_device():
 
 def build_image_encoder():
     device = get_torch_device()
-    model, _, preprocess = open_clip.create_model_and_transforms(
-        'ViT-B-16-plus-240',
-        pretrained="laion400m_e32"
-    )
-    model.eval().to(device)
+    model, preprocess = clip.load("ViT-B/32", device=device)
+    model.eval()
     return model, preprocess
 
 
 def build_text_encoder():
     device = get_torch_device()
-    model, _, _ = open_clip.create_model_and_transforms(
-        'ViT-B-16-plus-240',
-        pretrained="laion400m_e32"
-    )
-    model.eval().to(device)
+    model, _ = clip.load("ViT-B/32", device=device)
+    model.eval()
     return model
 
 
 def build_text_tokenizer():
-    return open_clip.get_tokenizer('ViT-B-16-plus-240')
+    return clip.tokenize
 
 
-def build_tensors(parameters, query_type, device,
-                  image_encoder, image_preprocess,
-                  text_encoder, text_tokenizer):
+def build_tensors(parameters, query_type, device, image_encoder, image_preprocess, text_encoder, text_tokenizer):
     texts = parameters['textsQuery']
     images = parameters['imagesQuery']
     from_where = parameters['from']
-
+    
     if query_type == 0:
-        texts_tensors = build_texts_tensors(
-            texts, text_encoder, text_tokenizer, device
-        )
+        texts_tensors = build_texts_tensors(texts, text_encoder, text_tokenizer, device)
         return normalize_tensors(texts_tensors)
-
     elif query_type == 1:
-        images_tensors = build_images_tensors(
-            images, device, image_encoder, image_preprocess, from_where
-        )
+        images_tensors = build_images_tensors(images, device, image_encoder, image_preprocess, from_where)
         return normalize_tensors(images_tensors)
-
     else:
-        texts_tensors = build_texts_tensors(
-            texts, text_encoder, text_tokenizer, device
-        )
-        images_tensors = build_images_tensors(
-            images, device, image_encoder, image_preprocess, from_where
-        )
+        texts_tensors = build_texts_tensors(texts, text_encoder, text_tokenizer, device)
+        images_tensors = build_images_tensors(images, device, image_encoder, image_preprocess, from_where)
         return normalize_tensors(texts_tensors), normalize_tensors(images_tensors)
 
 
@@ -70,24 +52,19 @@ def build_texts_tensors(texts, model, tokenizer, device):
 
     with torch.no_grad():
         tokens = tokenizer(texts).to(device)
-        feats = model.encode_text(tokens)
-        return feats
+        text_features = model.encode_text(tokens)
+        text_features = text_features.float()
+        return text_features.to(device)
 
 
 def build_images_tensors(images, device, model, preprocess, from_where):
     images_tensors = []
     if from_where == 'searchbar':
-        images_tensors = [
-            process_image_from_base64(image, device, model, preprocess)
-            for image in images
-        ]
+        images_tensors = [process_image_from_base64(image, device, model, preprocess) for image in images]
     else:
         images_list = [Image.open(image_path) for image_path in images]
-        images_tensors = [
-            process_image(image, device, model, preprocess)
-            for image in images_list
-        ]
-
+        images_tensors = [process_image(image, device, model, preprocess) for image in images_list]
+    
     return torch.cat(images_tensors, dim=0)
 
 
@@ -98,9 +75,13 @@ def process_image_from_base64(image, device, model, preprocess):
 
 
 def process_image(image, device, model, preprocess):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     image_tensor = preprocess(image).unsqueeze(0).to(device)
     with torch.no_grad():
-        return model.encode_image(image_tensor)
+        image_features = model.encode_image(image_tensor)
+        image_features = image_features.float()
+        return image_features.to(device)
 
 
 def normalize_tensors(tensors):
@@ -109,55 +90,29 @@ def normalize_tensors(tensors):
 
 def calculate_similarities(tensors, image_embedding, word_embedding, query_type, device):
     if query_type == 2:
-        text_tensors, image_tensors = tensors 
+        texts_tensors, images_tensors = tensors
 
-        similarities_im_texts = [
-            image_features.to(device) @ text_tensors.T
-            for image_features in image_embedding
-        ]
-        similarities_im_images = [
-            image_features.to(device) @ image_tensors.T
-            for image_features in image_embedding
-        ]
-        similarities_wo_texts = [
-            text_features.to(device) @ text_tensors.T
-            for text_features in word_embedding
-        ]
-        similarities_wo_images = [
-            text_features.to(device) @ image_tensors.T
-            for text_features in word_embedding
-        ]
+        similarities_im_texts = [image_features.to(device) @ texts_tensors.T for image_features in image_embedding]
+        similarities_im_images = [image_features.to(device) @ images_tensors.T for image_features in image_embedding]
+        similarities_wo_texts = [text_features.to(device) @ texts_tensors.T for text_features in word_embedding]
+        similarities_wo_images = [text_features.to(device) @ images_tensors.T for text_features in word_embedding]
         return [
             np.transpose(torch.stack(similarities_im_texts).cpu().numpy()),
             np.transpose(torch.stack(similarities_im_images).cpu().numpy()),
             np.transpose(torch.stack(similarities_wo_texts).cpu().numpy()),
-            np.transpose(torch.stack(similarities_wo_images).cpu().numpy()),
+            np.transpose(torch.stack(similarities_wo_images).cpu().numpy())
         ]
-
     else:
-        query_tensors = tensors
-        similarities_im = [
-            image_features.to(device) @ query_tensors.T
-            for image_features in image_embedding
-        ]
-        similarities_wo = [
-            text_features.to(device) @ query_tensors.T
-            for text_features in word_embedding
-        ]
+        similarities_im = [image_features.to(device) @ tensors.T for image_features in image_embedding]
+        similarities_wo = [text_features.to(device) @ tensors.T for text_features in word_embedding]
         return [
             np.transpose(torch.stack(similarities_im).cpu().numpy()),
-            np.transpose(torch.stack(similarities_wo).cpu().numpy()),
+            np.transpose(torch.stack(similarities_wo).cpu().numpy())
         ]
 
 
 def normalize_similarities(similarities):
-    normed = []
-    for sim in similarities:
-        if np.max(sim) == np.min(sim):
-            normed.append(np.zeros_like(sim))
-        else:
-            normed.append((sim - np.min(sim)) / (np.max(sim) - np.min(sim)))
-    return normed
+    return [(sim - np.min(sim)) / (np.max(sim) - np.min(sim)) for sim in similarities]
 
 
 def get_indices(similarities_lists, similarity_value):
@@ -168,9 +123,6 @@ def get_indices(similarities_lists, similarity_value):
         for k, value in enumerate(sim)
         if value >= similarity_value
     ]
-    if not indices:
-        return [], []
-
     unique_indices_sim_df = (
         pd.DataFrame(indices, columns=['indices', 'similarities'])
         .drop_duplicates('indices')
