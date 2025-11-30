@@ -201,7 +201,6 @@ export class AuthService {
           }
           
           this.setData(res);
-          userRef.set(res);
           this.userCollection.next(res);
         } else if (retries > 0) {
           console.log(`User collection not found, retrying... (${retries} attempts left)`);

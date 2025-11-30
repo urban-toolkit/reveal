@@ -61,8 +61,6 @@ export class StateService {
     userData.numberOfAddedStates = numberOfAddedStates;
     userData.states.push(state);
     
-    // CRITICAL FIX: Serialize ALL states before saving to Firestore to avoid nested array errors
-    // This ensures that any previously loaded states with deserialized polygons get re-serialized
     const userDataToSave = {
       ...userData,
       states: userData.states.map((s: State) => ({
@@ -116,8 +114,6 @@ export class StateService {
       }
     }
 
-    // CRITICAL FIX: Serialize ALL states before saving to Firestore to avoid nested array errors
-    // This ensures that any previously loaded states with deserialized polygons get re-serialized
     const userDataToSave = {
       ...userData,
       states: userData.states.map((s: State) => ({
@@ -193,16 +189,56 @@ export class StateService {
   }
 
   private serializePolygons(nodes: any[]): any[] {
-    return nodes.map(node => ({
-      ...node,
-      polygons: node.polygons ? JSON.stringify(node.polygons) : '[]'
-    }));
+    return nodes.map(node => {
+      const serialized: any = {
+        ...node
+      };
+      
+      if (node.polygons) {
+        serialized.polygons = typeof node.polygons === 'string' 
+          ? node.polygons
+          : JSON.stringify(node.polygons);
+      } else {
+        serialized.polygons = '[]';
+      }
+      
+      if (node.similarityValue && Array.isArray(node.similarityValue)) {
+        if (node.similarityValue.length > 0 && Array.isArray(node.similarityValue[0])) {
+          serialized.similarityValue = node.similarityValue.flat();
+        }
+      }
+      
+      if (node.locationsData && Array.isArray(node.locationsData)) {
+        if (node.locationsData.length > 0 && Array.isArray(node.locationsData[0])) {
+          serialized.locationsData = node.locationsData.flat();
+        }
+      }
+      
+      const arrayFields = [
+        'textsQuery', 'imagesQuery', 'imagesIds', 'textsIds',
+        'imagesSimilarities', 'textsSimilarities'
+      ];
+      
+      arrayFields.forEach(field => {
+        if (node[field] && Array.isArray(node[field])) {
+          if (node[field].length > 0 && Array.isArray(node[field][0])) {
+            serialized[field] = node[field].flat();
+          }
+        }
+      });
+      
+      return serialized;
+    });
   }
 
   private deserializePolygons(nodes: any[]): any[] {
     return nodes.map(node => ({
       ...node,
-      polygons: node.polygons ? JSON.parse(node.polygons) : []
+      polygons: node.polygons 
+        ? (typeof node.polygons === 'string'
+            ? JSON.parse(node.polygons)
+            : node.polygons)
+        : []
     }));
   }
 }

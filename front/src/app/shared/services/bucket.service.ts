@@ -54,11 +54,12 @@ export class BucketService {
     };
 
     userData.buckets.push(bucket);
-    userRef.set(userData);
+    
+    const userDataToSave = this.serializeUserData(userData);
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.buckets;
   }
-
 
   async saveUserBucket(bucketId: number) {
     const user = localStorage.getItem('user');
@@ -83,7 +84,8 @@ export class BucketService {
       if(userData.buckets[i].id == bucketId) userData.buckets[i].isSaved = 1;
     }
 
-    userRef.set(userData);
+    const userDataToSave = this.serializeUserData(userData);
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.buckets;
   }
@@ -106,11 +108,13 @@ export class BucketService {
       return;
     }
     const userData = JSON.parse(userCollectionData);
+    
     for(let i = 0; i < userData.buckets.length; i++) {
       if(userData.buckets[i].id == bucketId) userData.buckets[i].inUse = 0;
     }
 
-    userRef.set(userData);
+    const userDataToSave = this.serializeUserData(userData);
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.buckets;
   }
@@ -140,7 +144,8 @@ export class BucketService {
       }
     }
 
-    userRef.set(userData);
+    const userDataToSave = this.serializeUserData(userData);
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.buckets;
   }
@@ -170,7 +175,8 @@ export class BucketService {
       }
     }
 
-    userRef.set(userData);
+    const userDataToSave = this.serializeUserData(userData);
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.buckets;
   }
@@ -198,12 +204,66 @@ export class BucketService {
       if(userData.buckets[i].id == bucketId) userData.buckets[i].imageUrls.push(imageUrl);
     }
 
-    userRef.set(userData);
+    const userDataToSave = this.serializeUserData(userData);
+    userRef.set(userDataToSave);
     this.setData(userData);
     return userData.buckets;
   }
 
   setData(data: any) {
     localStorage.setItem('user_collection', JSON.stringify(data));
+  }
+
+  private serializeUserData(userData: any): any {
+    return {
+      ...userData,
+      states: userData.states ? userData.states.map((state: any) => ({
+        ...state,
+        nodes: state.nodes ? this.serializePolygons(state.nodes) : []
+      })) : []
+    };
+  }
+
+  private serializePolygons(nodes: any[]): any[] {
+    return nodes.map(node => {
+      const serialized: any = {
+        ...node
+      };
+      
+      if (node.polygons) {
+        serialized.polygons = typeof node.polygons === 'string' 
+          ? node.polygons
+          : JSON.stringify(node.polygons);
+      } else {
+        serialized.polygons = '[]';
+      }
+      
+      if (node.similarityValue && Array.isArray(node.similarityValue)) {
+        if (node.similarityValue.length > 0 && Array.isArray(node.similarityValue[0])) {
+          serialized.similarityValue = node.similarityValue.flat();
+        }
+      }
+      
+      if (node.locationsData && Array.isArray(node.locationsData)) {
+        if (node.locationsData.length > 0 && Array.isArray(node.locationsData[0])) {
+          serialized.locationsData = node.locationsData.flat();
+        }
+      }
+      
+      const arrayFields = [
+        'textsQuery', 'imagesQuery', 'imagesIds', 'textsIds',
+        'imagesSimilarities', 'textsSimilarities'
+      ];
+      
+      arrayFields.forEach(field => {
+        if (node[field] && Array.isArray(node[field])) {
+          if (node[field].length > 0 && Array.isArray(node[field][0])) {
+            serialized[field] = node[field].flat();
+          }
+        }
+      });
+      
+      return serialized;
+    });
   }
 }
