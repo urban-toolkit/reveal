@@ -12,6 +12,7 @@ import { StateComponent } from '../state/state.component';
 import { ModelGalleryComponent } from 'src/app/model-gallery/model-gallery.component';
 import { MapComponent } from 'src/app/map/map.component';
 
+import { PolygonFilterService } from '../shared/services/polygon-filter.service';
 import { ApiService } from 'src/app/shared/api.service';
 import { AuthService } from '../shared/services/auth.service';
 import { GlobalService } from 'src/app/shared/global.service';
@@ -70,7 +71,8 @@ export class HomeComponent implements AfterViewInit {
               public global: GlobalService, 
               private spinner: NgxSpinnerService, 
               public authService: AuthService,
-              public modalService: BsModalService) { }
+              public modalService: BsModalService,
+              private polygonFilter: PolygonFilterService) { }
   
   ngOnInit(): void {
     this.spinner.show();
@@ -178,7 +180,13 @@ export class HomeComponent implements AfterViewInit {
       }
 
       this.spinner.show();
-      const res = await this.api.getData(this.Query);
+
+      let res = await this.api.getData(this.Query);
+      const currentPolygons = this.map.getCurrentPolygons();
+      if (currentPolygons && currentPolygons.length > 0) {
+        res = this.polygonFilter.applyPolygonFilter(res, currentPolygons);
+      }   
+
       const schema = this.forceGraph.schema;
       if (schema.query.length > 0) { this.onSelectionsClear() };
       schema.query.push(this.Query);
@@ -189,7 +197,6 @@ export class HomeComponent implements AfterViewInit {
       schema.imagesSimilarities = res.images.similarities;
       schema.similarityValue = res.images.similarityValue;
       this.forceGraph.schema = schema;
-      const currentPolygons = this.map.getCurrentPolygons();
       this.forceGraph.addNode('searchbar', currentPolygons);
       this.imageEmbedding.setupImageEmbedding(res.images);
       this.textEmbedding.setupTextEmbedding(res.texts);
@@ -218,7 +225,13 @@ export class HomeComponent implements AfterViewInit {
       this.StateQuery.textsSimilarities = idsAndSimilarities[3];
       this.StateQuery.similarityValue = this.similarityValue;
       this.onSelectionsClear();
-      const res = await this.api.getState(this.StateQuery);
+      
+      let res = await this.api.getState(this.StateQuery);
+
+      const currentNode = this.forceGraph.currentMainNode;
+      if (currentNode && currentNode.polygons && currentNode.polygons.length > 0) {
+        res = this.polygonFilter.applyPolygonFilter(res, currentNode.polygons);
+      }
       
       if(res.images.similarities.length > 0 && res.texts.similarities.length > 0) {
         this.imageEmbedding.setupImageEmbedding(res.images);
@@ -256,7 +269,13 @@ export class HomeComponent implements AfterViewInit {
     this.EmbeddingQuery.similarityValue = this.similarityValue;
     this.EmbeddingQuery.from = 'interface';
     this.spinner.show();
-    const res = await this.api.getData(this.EmbeddingQuery);
+    let res = await this.api.getData(this.EmbeddingQuery);
+
+    const currentPolygons = this.map.getCurrentPolygons();
+    if (currentPolygons && currentPolygons.length > 0) {
+      res = this.polygonFilter.applyPolygonFilter(res, currentPolygons);
+    }
+
     const schema = this.forceGraph.schema;
     
     if (schema.query.length > 0) { this.onSelectionsClear() };
@@ -268,7 +287,6 @@ export class HomeComponent implements AfterViewInit {
     schema.imagesSimilarities = res.images.similarities;
     schema.similarityValue = res.images.similarityValue;
     this.forceGraph.schema = schema;
-    const currentPolygons = this.map.getCurrentPolygons();
     this.forceGraph.addNode('interface', currentPolygons);
     this.imageEmbedding.setupImageEmbedding(res.images);
     this.textEmbedding.setupTextEmbedding(res.texts);

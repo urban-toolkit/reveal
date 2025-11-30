@@ -1,4 +1,5 @@
-import { Component, OnInit, ElementRef, ViewChild, Output, EventEmitter, ComponentFactoryResolver } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, Output, EventEmitter } from '@angular/core';
+import { PolygonFilterService } from '../shared/services/polygon-filter.service';
 import { GlobalService } from 'src/app/shared/global.service';
 import { ApiService } from 'src/app/shared/api.service';
 import { BuildSetQuery } from '../shared/api.models';
@@ -33,7 +34,7 @@ export class ForceGraphComponent implements OnInit {
   public BuildSetQuery: BuildSetQuery = new BuildSetQuery();
   public schema: any = {number_of_queries: 0, query: [], imagesIds: [], similarities: [], locationsData: []};
   
-  constructor(public global: GlobalService, public api: ApiService) { }
+  constructor(public global: GlobalService, public api: ApiService, private polygonFilter: PolygonFilterService) { }
 
   async ngOnInit(): Promise<void> { 
   }
@@ -366,6 +367,11 @@ export class ForceGraphComponent implements OnInit {
   async createLinks(res: any, nodeId: number, textsQuery: any, imagesQuery: any, 
                     queryType: any, similarityValue: any, iteractionType: number, 
                     locationsData: any, inheritedPolygons: any[]) {
+
+    if (inheritedPolygons && inheritedPolygons.length > 0) {
+      res = this.polygonFilter.applyPolygonFilter(res, inheritedPolygons);
+    }
+    
     const imagesIds = res.images.labels;
     const textsIds = res.texts.labels;
     const imagesSimilarities = res.images.similarities;
