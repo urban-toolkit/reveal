@@ -37,21 +37,22 @@
     
     <ngx-spinner size="medium" type="ball-clip-rotate" [fullScreen] = "true"><p style="color: white" > Loading... </p></ngx-spinner>
     
+    <!-- Search Bar -->
     <div class="search-bar">
         <div class="wrap">
             <button class="log-out" style="width: 39px; margin-left: 12px;" (click)="drawer.toggle()"
                 matTooltip="Open the lateral menu to view and manage your saved buckets and saved interface states. Access your stored multimodal data and previous work sessions.">
-                <span class="fa-solid fa-bars"></span>
+                <i class="fas fa-bars"></i>
             </button>
             <button class="log-out" (click)="authService.SignOut()">
-                <i class="fas fa-sign-out-alt"></i>Log out
+                <i class="fas fa-sign-out-alt"></i> Log out
             </button>
             <form class="search" [formGroup]="searchForm" (ngSubmit)="search()">     
                 <div>
                     <input id="texts" class="searchTerm" type="text" placeholder="{{placeholder}}" formControlName="texts" (ngModelChange)="onTextChange($event)">
                 </div>
-                <input id="images" multiple="" (change)="onFileChange($event)" #fileUpload type="file" id="img" formControlName="images" name="img" accept="image/*" style="display: none;">
-                <button style="border-left: 2px solid rgba(149, 165, 166, 1) !important;" type="button" class="control" (click)="this.toggleConfigVisibility()"
+                <input id="images" multiple="" (change)="onFileChange($event)" #fileUpload type="file" formControlName="images" accept="image/*" style="display: none;">
+                <button style="border-left: 2px solid rgba(149, 165, 166, 1) !important;" type="button" class="control" [style.background-color]="this.isConfigVisible() ? '#eee' : '#fff' " (click)="this.toggleConfigVisibility()"
                     matTooltip="Settings to customize your search criteria and preferences. Adjust the filters and parameters to refine your search results.">
                     <i class="fa-solid fa-gear"></i>
                 </button>
@@ -79,112 +80,136 @@
                 matTooltip="Clear the interface to reset all input fields and remove any current data or search results.">
                 <i class="fas fa-trash"></i>
             </button>
-            <!--<img *ngFor='let url of images'  [src]="url" height="150" width="200px" style="margin: 3px;"> <br/>-->
         </div>
     </div>
 
+    <!-- Config Window -->
     <div #configBox [ngDraggable]="this.draggable" class="widget config-window" style="display: none;"
-    [style.z-index] = "this.isConfigVisible() ? '100' : '-100' "
-    >
-    <app-search-config
-        (dragBoxToggled) = "this.toggleDragBoxDrag()"
-        (similarityChanged) = "this.changeSimilarity($event)"
-        (clearEmbeddingsSelection) = "this.onSelectionsClear()"
-        (toggleCombinedEmbedding) = "this.onEmbeddingToggle($event)"
-    ></app-search-config>
+    [style.z-index] = "this.isConfigVisible() ? '100' : '-100' ">
+        <app-search-config
+            (dragBoxToggled) = "this.toggleDragBoxDrag()"
+            (similarityChanged) = "this.changeSimilarity($event)"
+            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
+            (toggleCombinedEmbedding) = "this.onEmbeddingToggle($event)"
+        ></app-search-config>
     </div>
 
-    <div class="visualizations">
-        <div [style.z-index] = "!displayCombinedComponent ? '100' : '-100' " class="embedding" id="image-embedding-div">
-            <app-image-embedding
-            (imageLinkSelected) = "this.linkImagesAndTexts($event)"
-            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
-            (highlightImageGallery) = "this.highlightImageGallery($event)"
-            (highlightCombinedEmbedding) = "this.highlightCombinedEmbeddingFromImage($event)"
-            ></app-image-embedding>
-        </div>
-        <div [ngClass]="!displayCombinedComponent ? 'legend' : 'legend-far'">
-            <div class="d3-color-legend">
-                <app-color-legend></app-color-legend>
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Embeddings Box (Image Embedding + Legend + Word Embedding) -->
+            <div class="view-box embeddings-box">
+                <div class="embeddings-container">
+                    <div [style.z-index] = "!displayCombinedComponent ? '100' : '-100' " class="embedding" id="image-embedding-div">
+                        <app-image-embedding
+                            (imageLinkSelected) = "this.linkImagesAndTexts($event)"
+                            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
+                            (highlightImageGallery) = "this.highlightImageGallery($event)"
+                            (highlightCombinedEmbedding) = "this.highlightCombinedEmbeddingFromImage($event)"
+                        ></app-image-embedding>
+                    </div>
+                    <div [ngClass]="!displayCombinedComponent ? 'legend' : 'legend-far'">
+                        <div class="d3-color-legend">
+                            <app-color-legend></app-color-legend>
+                        </div>
+                    </div>
+                    <div [style.z-index] = "!displayCombinedComponent ? '100' : '-100' " class="embedding" id="text-embedding-div">
+                        <app-text-embedding
+                            (textLinkSelected) = "this.linkImagesAndTexts($event)"
+                            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
+                            (highlightWordCloud) = "this.highlightWordCloud($event)"
+                            (highlightCombinedEmbedding) = "this.highlightCombinedEmbeddingFromText($event)"
+                        ></app-text-embedding>
+                    </div>
+                    <div [style.z-index] = "!displayCombinedComponent ? '-100' : '100' " class="combined-embedding" id="combined-embedding-div" style="display: none;">
+                        <app-combined-embedding
+                            (highlightImageGallery) = "this.highlightImageGallery($event)"
+                            (highlightWordCloud) = "this.highlightWordCloud($event)"
+                            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
+                            (toggleEmbeddings) = "toggleEmbeddingsFromCombined($event)"
+                        ></app-combined-embedding>
+                    </div>
+                </div>
+                <ul id="contextmenu-text-embedding"></ul>
+                <ul id="contextmenu-image-embedding"></ul>
+                <ul id="contextmenu-combined-embedding"></ul>
+            </div>
+
+            <!-- Force Graph Box -->
+            <div class="view-box force-graph-box">
+                <div class="force-graph" id="force-graph-div">
+                    <app-force-graph
+                        (embeddingState) = "this.embeddingsToState($event)"
+                        (resetAll) = "this.resetAll('reset')"
+                    ></app-force-graph>
+                </div>
             </div>
         </div>
-        <div [style.z-index] = "!displayCombinedComponent ? '100' : '-100' " class="embedding" id="text-embedding-div">
-            <app-text-embedding
-            (textLinkSelected) = "this.linkImagesAndTexts($event)"
-            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
-            (highlightWordCloud) = "this.highlightWordCloud($event)"
-            (highlightCombinedEmbedding) = "this.highlightCombinedEmbeddingFromText($event)"
-            ></app-text-embedding>
-        </div>
-        <div [style.z-index] = "!displayCombinedComponent ? '-100' : '100' " class="combined-embedding" id="combined-embedding-div" style="display: none;">
-            <app-combined-embedding
-            (highlightImageGallery) = "this.highlightImageGallery($event)"
-            (highlightWordCloud) = "this.highlightWordCloud($event)"
-            (clearEmbeddingsSelection) = "this.onSelectionsClear()"
-            (toggleEmbeddings) = "toggleEmbeddingsFromCombined($event)"
-            ></app-combined-embedding>
-        </div>
-        <div class="mode-control" style="left: 68%;">
-            <button class="btn btn-custom" [style.background-color]="this.wichModeSelected == 'gallery' ? '#eee' : '#fff' " type="button" (click)="this.setMode('gallery')"
-                matTooltip="Image gallery displaying query results in descending order of similarity. Select images to save them along with their text descriptions in multimodal data buckets. Click on them to see the whole image and its text.">
-                <span class="fa-solid fa-image"
-                [style.color]="this.wichModeSelected == 'gallery' ? '#97a97c' : 'rgba(149, 165, 166, 1)' "></span>
-            </button>
-            <button class="btn btn-custom" [style.background-color]="this.wichModeSelected == 'cloud' ? '#eee' : '#fff' " type="button" (click)="this.setMode('cloud')"
-                matTooltip="Word cloud presenting the top 20 concepts based on their similarity to the content of the given query. Visualize key terms related to your search.">
-                <span class="fa-solid fa-cloud"
-                [style.color]="this.wichModeSelected == 'cloud' ? '#97a97c' : 'rgba(149, 165, 166, 1)' "></span>
-            </button>
-        </div>
-        <mat-icon matTooltip="To display the image gallery and word cloud, click on the image icon for the gallery and the cloud icon for the word cloud." class="help-icon">help</mat-icon>
-        <div class="gallery" id="gallery-div">
-            <app-image-gallery 
-            [style.visibility]="this.wichModeSelected == 'gallery' ? '' : 'hidden'"
-            [style.display]="this.wichModeSelected == 'gallery' ? 'block' : 'none'"
-            (toggleImage) = "this.toggleEmbeddingImageFromGallery($event)"
-            (gallerySearchSelected)="this.searchSelected($event)"
-            (dropImage) = "this.addImageToBucket($event)"
-            (getInfo) = "this.infoQuery($event)">
-            </app-image-gallery>
-            <app-word-cloud [style.visibility]="this.wichModeSelected == 'cloud' ? '' : 'hidden'"
-            (toggleText) = "this.toggleEmbeddingTextFromCloud($event)">
-            </app-word-cloud>
-        </div>
 
-        <ul id="contextmenu-text-embedding"></ul>
-        <ul id="contextmenu-image-embedding"></ul>
-        <ul id="contextmenu-combined-embedding"></ul>
-        <ul id="contextmenu-galleries"></ul>
-    </div>
-    <div class="force-graph-and-map-container">
-        <div class="force-graph" id="force-graph-div" style="z-index: 99;">
-            <app-force-graph
-            (embeddingState) = "this.embeddingsToState($event)"
-            (resetAll) = "this.resetAll('reset')"
-            ></app-force-graph>
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Gallery/Word Cloud Box -->
+            <div class="view-box gallery-box">
+                <div class="gallery-container">
+                    <div class="mode-control">
+                        <button class="btn btn-custom" [style.background-color]="this.wichModeSelected == 'gallery' ? '#eee' : '#fff' " type="button" (click)="this.setMode('gallery')"
+                            matTooltip="Image gallery displaying query results in descending order of similarity. Select images to save them along with their text descriptions in multimodal data buckets. Click on them to see the whole image and its text.">
+                            <span class="fa-solid fa-image"
+                            [style.color]="this.wichModeSelected == 'gallery' ? '#97a97c' : 'rgba(149, 165, 166, 1)' "></span>
+                        </button>
+                        <button class="btn btn-custom" [style.background-color]="this.wichModeSelected == 'cloud' ? '#eee' : '#fff' " type="button" (click)="this.setMode('cloud')"
+                            matTooltip="Word cloud presenting the top 20 concepts based on their similarity to the content of the given query. Visualize key terms related to your search.">
+                            <span class="fa-solid fa-cloud"
+                            [style.color]="this.wichModeSelected == 'cloud' ? '#97a97c' : 'rgba(149, 165, 166, 1)' "></span>
+                        </button>
+                    </div>
+                    <mat-icon matTooltip="To display the image gallery and word cloud, click on the image icon for the gallery and the cloud icon for the word cloud." class="gallery-help-icon">help</mat-icon>
+                    <div class="gallery" id="gallery-div">
+                        <app-image-gallery 
+                            [style.visibility]="this.wichModeSelected == 'gallery' ? '' : 'hidden'"
+                            [style.display]="this.wichModeSelected == 'gallery' ? 'block' : 'none'"
+                            (toggleImage) = "this.toggleEmbeddingImageFromGallery($event)"
+                            (gallerySearchSelected)="this.searchSelected($event)"
+                            (dropImage) = "this.addImageToBucket($event)"
+                            (getInfo) = "this.infoQuery($event)">
+                        </app-image-gallery>
+                        <app-word-cloud [style.visibility]="this.wichModeSelected == 'cloud' ? '' : 'hidden'"
+                            (toggleText) = "this.toggleEmbeddingTextFromCloud($event)">
+                        </app-word-cloud>
+                    </div>
+                </div>
+                <ul id="contextmenu-galleries"></ul>
+            </div>
+
+            <!-- Map Box -->
+            <div class="view-box map-box">
+                <div class="map-wrapper">
+                    <app-map 
+                        #mapComponent
+                        (polygonsChanged)="onPolygonsChanged($event)">
+                    </app-map>
+                </div>
+            </div>
         </div>
-        <div class="map-wrapper">
-            <app-map 
-            #mapComponent
-            (polygonsChanged)="onPolygonsChanged($event)"></app-map>
-        </div>  
     </div>
+
     <ul id="contextmenu-force-graph"></ul>
 
     <app-bucket
-    (bucketAdded) = "this.setBucketsMenu($event);"
-    (bucketSaved) = "setAllBucketsMenu($event);">
+        (bucketAdded) = "this.setBucketsMenu($event);"
+        (bucketSaved) = "setAllBucketsMenu($event);">
     </app-bucket>
     <app-state
-    (statesChanged) = "this.setAllSavedStatesMenu()"
-    (setFy) = "this.setFyToUndefined()"
-    (changeStateStatus) = "this.changeState($event)">
+        (statesChanged) = "this.setAllSavedStatesMenu()"
+        (setFy) = "this.setFyToUndefined()"
+        (changeStateStatus) = "this.changeState($event)">
     </app-state>
 
     <ng-template #templateBucket>
         <div class="modal-header">
             <h1 class="modal-title pull-left" style="color: #808080">New bucket</h1>
-            <button type="button"  class="btn btn-custom" style="background-color:rgb(238, 238, 238) !important;" aria-label="Close" (click)="modalRef.hide()">
+            <button type="button" class="btn btn-custom" style="background-color:rgb(238, 238, 238) !important;" aria-label="Close" (click)="modalRef.hide()">
                 <i style="color: #97a97c;" class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -206,7 +231,7 @@
     <ng-template #templateState>
         <div class="modal-header">
             <h1 class="modal-title pull-left" style="color: #808080">Save State</h1>
-            <button type="button"  class="btn btn-custom" style="background-color:rgb(238, 238, 238) !important;" aria-label="Close" (click)="modalRef.hide()">
+            <button type="button" class="btn btn-custom" style="background-color:rgb(238, 238, 238) !important;" aria-label="Close" (click)="modalRef.hide()">
                 <i style="color: #97a97c;" class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -226,6 +251,3 @@
     </ng-template>
     <app-model-gallery></app-model-gallery>
 </mat-drawer-container>
-
-
-

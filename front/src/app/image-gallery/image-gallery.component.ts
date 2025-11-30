@@ -37,9 +37,8 @@ export class ImageGalleryComponent implements OnInit {
   public modalRef: BsModalRef = new BsModalRef;
   public template: any;
   public info: string = "";
+  
   constructor(private modalService: BsModalService) { }
-
-
 
   ngOnInit(): void { }
   
@@ -80,22 +79,24 @@ export class ImageGalleryComponent implements OnInit {
     const paths = data.labelPaths;
     const ids = data.labels;
     for(let i = 0; i < paths.length; i++) {
-      this.allImages.push({src: `https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${paths[i]}`,
-                       thumb: `https://storage.googleapis.com/trabalho_final/dataset/llm/thumbnails/${paths[i]}`, 
-                       id: ids[i], 
-                       index: i, 
-                       width: 93, 
-                       height: 93, 
-                       margin: 1,
-                       border:'none',
-                       borderColor:'',
-                       borderWidth:'0px'});
+      this.allImages.push({
+        src: `https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${paths[i]}`,
+        thumb: `https://storage.googleapis.com/trabalho_final/dataset/llm/thumbnails/${paths[i]}`, 
+        id: ids[i], 
+        index: i, 
+        width: 80, 
+        height: 80, 
+        margin: 2,
+        border:'none',
+        borderColor:'',
+        borderWidth:'0px'
+      });
     }
 
-    this.items = this.allImages.slice(0, 12);
+    // Show all images instead of slicing to 12
+    this.items = this.allImages;
 
     this.needRefresh = true;
-
   }
 
   gallerySearch() {
@@ -108,25 +109,8 @@ export class ImageGalleryComponent implements OnInit {
           if(this.selectedIndices[i] == img.id) imageLabels.push(img.src);
         })
       };
-    this.gallerySearchSelected.emit({"indices": imageIndices, "labels": imageLabels, "queryType": 1});
+      this.gallerySearchSelected.emit({"indices": imageIndices, "labels": imageLabels, "queryType": 1});
     }
-  }
-
-  //not being used
-  onHoverEnter(id: number, index: number) {
-    this.items[index].width = 103;
-    this.items[index].height = 103;
-    this.toggleImage.emit({labels: [id], selected: true});
-    this.needRefresh = true;
-
-  }
-
-  //not being used
-  onHoverLeave(id: number, index: number) {
-    this.items[index].width = 93;
-    this.items[index].height = 93;
-    this.toggleImage.emit({labels: [id], selected: false})
-    this.needRefresh = true;
   }
 
   onClick(event: any, id: number, index: number) {
@@ -149,11 +133,9 @@ export class ImageGalleryComponent implements OnInit {
       }
       this.toggleImage.emit({labels: this.selectedIndices, selected: true});
   
-      if(this.tabsCounter == 0) {
-        this.items = this.allImages.slice(0, 12);
-      } else {
-        this.items = this.allImages.slice(this.tabsCounter*12, (this.tabsCounter + 1)*12);
-      }  
+      // Update items to reflect changes (now showing all images)
+      this.items = this.allImages;
+
       this.needRefresh = true; 
     }
   }
@@ -177,15 +159,11 @@ export class ImageGalleryComponent implements OnInit {
     this.needRefresh = true; 
   }
 
+  // Keep for backward compatibility but no longer used for pagination
   updateTabCounter(value: number) {
     this.tabsCounter += value;
-
-    if(this.tabsCounter == 0) {
-      this.items = this.allImages.slice(0, 12);
-    } else {
-      this.items = this.allImages.slice(this.tabsCounter*12, (this.tabsCounter + 1)*12);
-    }
-
+    // Now showing all images, so just refresh
+    this.items = this.allImages;
     this.needRefresh = true;
   }
 
@@ -193,12 +171,14 @@ export class ImageGalleryComponent implements OnInit {
     return this.selectedIndices.length > 0
   }
 
+  // Keep for backward compatibility
   hasNext() {
-    return ((this.tabsCounter + 1) * 12 < this.allImages.length)
+    return false;
   }
 
+  // Keep for backward compatibility
   hasPrevious() {
-    return ((this.tabsCounter + 1) * 12 > 12)
+    return false;
   }
 
   hasImages() {
@@ -207,6 +187,9 @@ export class ImageGalleryComponent implements OnInit {
 
   clear() {
     this.items = [];
+    this.allImages = [];
+    this.selectedIndices = [];
+    this.selectedImagePaths = [];
   }
 
   openModal(template: TemplateRef<any>) {

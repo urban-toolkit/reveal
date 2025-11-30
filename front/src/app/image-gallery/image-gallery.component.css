@@ -1,49 +1,51 @@
-.sim-position {
-    background-color: rgba(0, 0, 0, 0.7);
-    margin-top: -380px;
-    width: 137px;
-    border-radius: 4px;
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
 #gallery {
-    width: 360px;
-    margin: 0 auto;
-    margin-top: 10%;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.btn:focus {
-    outline: none !important;
-    box-shadow: none !important;
+#lightgallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 4px;
+  padding: 8px;
 }
 
-.btn{
-	box-shadow: none !important
+.grid-item {
+  display: inline-block;
+  cursor: pointer;
 }
 
-.btn-custom{
-    background-color: #eee !important;
-    outline-color: #eee !important;
-    border-color: #eee !important;
+.grid-item img {
+  object-fit: cover;
+  border-radius: 4px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.grid-item img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-custom {
+  color: black;
+  background-color: #fff;
+  outline-color: #fff !important;
+  border-color: #fff !important;
 }
 
 .btn-custom:hover {
-    background-color: #fff;
-    outline-color: #fff !important;
-    border-color: #fff !important;
-}
-  
-  
-.btn-custom{
-    background-color: #eee !important;
-    outline-color: #eee !important;
-    border-color: #eee !important;
-}
-
-.btn:active {
-    transform: translateY(2px);
-    filter: saturate(150%);
-}
-
-::ng-deep .modal {
-    z-index: 1050;
+  background-color: #eee !important;
+  outline-color: #eee !important;
+  border-color: #eee !important;
 }
