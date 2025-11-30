@@ -83,7 +83,7 @@
         </div>
     </div>
 
-    <div #configBox [ngDraggable]="this.draggable" class="widget config-window"
+    <div #configBox [ngDraggable]="this.draggable" class="widget config-window" style="display: none;"
     [style.z-index] = "this.isConfigVisible() ? '100' : '-100' "
     >
     <app-search-config
@@ -116,7 +116,7 @@
             (highlightCombinedEmbedding) = "this.highlightCombinedEmbeddingFromText($event)"
             ></app-text-embedding>
         </div>
-        <div [style.z-index] = "!displayCombinedComponent ? '-100' : '100' " class="combined-embedding" id="combined-embedding-div">
+        <div [style.z-index] = "!displayCombinedComponent ? '-100' : '100' " class="combined-embedding" id="combined-embedding-div" style="display: none;">
             <app-combined-embedding
             (highlightImageGallery) = "this.highlightImageGallery($event)"
             (highlightWordCloud) = "this.highlightWordCloud($event)"
