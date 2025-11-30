@@ -139,11 +139,17 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     if (selectedFeatures.features.length > 0) {
       const selectedIds = selectedFeatures.features.map((f: any) => f.id);
+      
       selectedIds.forEach((id: string) => {
         this.draw.delete(id);
       });
       
+      this.polygons = this.polygons.filter(p => !selectedIds.includes(p.id));
+      
+      this.polygonsChanged.emit(this.polygons);
+      
       console.log(`Deleted ${selectedIds.length} selected polygon(s)`);
+      console.log('Remaining polygons:', this.polygons.length);
     } else {
       console.log('No polygon selected for deletion');
     }
