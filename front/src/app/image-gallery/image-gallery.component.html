@@ -1,19 +1,27 @@
-<div id="gallery" oncontextmenu="return false">
-  <lightgallery id="lightgallery" [settings]="settings" [onInit]="onInit" [onAfterSlide]="onAfterSlide">
-    <a *ngFor="let item of items" class='grid-item' [attr.href]="item.src"
-    [style.width.px]="item.width"
-    [style.height.px]="item.height" 
-    (click)="this.onClick($event, item.id, item.index)">
-      <img src="{{ item.thumb }}"
-      [style.width.px]="item.width"
-      [style.height.px]="item.height"
-      [style.margin.px]="item.margin"
-      [style.border-style]="item.border"
-      [style.border-width]="item.borderWidth"
-      [style.border-color]="item.borderColor" 
-      />
-    </a>
-  </lightgallery>
+<div class="gallery-wrapper" style="height: 100%; display: flex; flex-direction: column;">
+    <div id="gallery" oncontextmenu="return false" style="flex: 1; overflow-y: auto;">
+        <lightgallery id="lightgallery" [settings]="settings" [onInit]="onInit" [onAfterSlide]="onAfterSlide">
+            <a *ngFor="let item of items" class='grid-item' [attr.href]="item.src"
+            [style.width.px]="item.width"
+            [style.height.px]="item.height" 
+            (click)="this.onClick($event, item.id, item.index)">
+            <img src="{{ item.thumb }}"
+            [style.width.px]="item.width"
+            [style.height.px]="item.height"
+            [style.margin.px]="item.margin"
+            [style.border-style]="item.border"
+            [style.border-width]="item.borderWidth"
+            [style.border-color]="item.borderColor" 
+            />
+            </a>
+        </lightgallery>
+    
+        <div *ngIf="hasMoreImages" class="load-more-container" style="text-align: center; margin: 10px 0;">
+            <button class="btn btn-custom" (click)="loadMore()" style="background-color: #eee; width: 100%; color: #97a97c;">
+                Load More <i class="fa-solid fa-chevron-down"></i>
+            </button>
+        </div>
+    </div>
 </div>
 
 <ng-template #infoTemplate>

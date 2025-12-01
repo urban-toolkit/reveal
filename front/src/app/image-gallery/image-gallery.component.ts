@@ -25,6 +25,11 @@ export class ImageGalleryComponent implements OnInit {
   public selectedIndices: number[] = [];
   public selectedImagePaths: string[] = [];
   private allImages: any[] = [];
+  
+  // Optimization: Batch Loading Variables
+  private batchSize = 50; 
+  public hasMoreImages = false;
+
   public tabsCounter: number = 0;
   public settings = {
     counter: false,
@@ -44,15 +49,25 @@ export class ImageGalleryComponent implements OnInit {
   
   ngAfterViewInit() {
     this.template = this.infoTemplate;
-    document.getElementById("lg-info-1")!.addEventListener("click", () => {
-      this.openModal(this.template);
-    });
+    // Note: We might need to re-attach this listener when LightGallery refreshes, 
+    // but the toolbar usually persists.
+    const interval = setInterval(() => {
+        const btn = document.getElementById("lg-info-1");
+        if(btn) {
+            btn.addEventListener("click", () => {
+                this.openModal(this.template);
+            });
+            clearInterval(interval);
+        }
+    }, 500);
   }
 
   ngAfterViewChecked(): void {
     if (this.needRefresh) {
       this.lightGallery.refresh();
       this.needRefresh = false;
+      
+      // Re-attach drag listeners to new images
       const images = document.querySelectorAll('.grid-item img');
       for(let i = 0; i < images.length; i++) { 
         images[i].addEventListener('dragend', (event:any) => {
@@ -78,6 +93,7 @@ export class ImageGalleryComponent implements OnInit {
     const similarities = data.similarities;
     const paths = data.labelPaths;
     const ids = data.labels;
+    
     for(let i = 0; i < paths.length; i++) {
       this.allImages.push({
         src: `https://storage.googleapis.com/trabalho_final/dataset/llm/processed/${paths[i]}`,
@@ -93,9 +109,23 @@ export class ImageGalleryComponent implements OnInit {
       });
     }
 
-    // Show all images instead of slicing to 12
-    this.items = this.allImages;
+    // Optimization: Load only the first batch
+    this.items = this.allImages.slice(0, this.batchSize);
+    this.hasMoreImages = this.allImages.length > this.items.length;
 
+    this.needRefresh = true;
+  }
+
+  loadMore() {
+    if (!this.hasMoreImages) return;
+
+    const currentLength = this.items.length;
+    const nextBatch = this.allImages.slice(currentLength, currentLength + this.batchSize);
+    
+    // Append new items to the existing list
+    this.items = [...this.items, ...nextBatch];
+    
+    this.hasMoreImages = this.allImages.length > this.items.length;
     this.needRefresh = true;
   }
 
@@ -132,11 +162,11 @@ export class ImageGalleryComponent implements OnInit {
         this.allImages[index].borderWidth = "0px";
       }
       this.toggleImage.emit({labels: this.selectedIndices, selected: true});
-  
-      // Update items to reflect changes (now showing all images)
-      this.items = this.allImages;
-
-      this.needRefresh = true; 
+      
+      // Note: We do NOT need to re-assign this.items = this.allImages here anymore.
+      // Since objects in this.items are references to objects in this.allImages,
+      // the border style changes will reflect automatically.
+      // Re-assigning would break the pagination view.
     }
   }
 
@@ -144,42 +174,40 @@ export class ImageGalleryComponent implements OnInit {
     this.selectedIndices = [];
     this.selectedImagePaths = [];
 
+    // Reset all borders
     for(let i = 0; i < this.allImages.length; i++) {
       this.allImages[i].border = 'none';
       this.allImages[i].borderColor = "";
       this.allImages[i].borderWidth = "0px";
     }
 
+    // Apply selection to specific points
     for(let i = 0; i < points.length; i++) {
-      this.allImages[points[i]].border = 'solid';
-      this.allImages[points[i]].borderColor = "#00FF00";
-      this.allImages[points[i]].borderWidth = "3px";
-      this.selectedIndices.push(this.allImages[points[i]].id);
+      // Safety check in case points contains an index out of bounds
+      if (this.allImages[points[i]]) {
+        this.allImages[points[i]].border = 'solid';
+        this.allImages[points[i]].borderColor = "#00FF00";
+        this.allImages[points[i]].borderWidth = "3px";
+        this.selectedIndices.push(this.allImages[points[i]].id);
+      }
     }
-    this.needRefresh = true; 
+    
+    // We do not change this.items here, keeping the current scroll position/pagination state
+    // But we might need to refresh if the selection visual needs to update significantly
+    // However, usually Angular change detection handles the style binding.
   }
 
-  // Keep for backward compatibility but no longer used for pagination
   updateTabCounter(value: number) {
+    // Legacy support or can be removed if strictly using Load More
     this.tabsCounter += value;
-    // Now showing all images, so just refresh
-    this.items = this.allImages;
-    this.needRefresh = true;
   }
 
   hasSelectedImages() {
     return this.selectedIndices.length > 0
   }
 
-  // Keep for backward compatibility
-  hasNext() {
-    return false;
-  }
-
-  // Keep for backward compatibility
-  hasPrevious() {
-    return false;
-  }
+  hasNext() { return false; }
+  hasPrevious() { return false; }
 
   hasImages() {
     return this.items.length > 0;
@@ -190,6 +218,7 @@ export class ImageGalleryComponent implements OnInit {
     this.allImages = [];
     this.selectedIndices = [];
     this.selectedImagePaths = [];
+    this.hasMoreImages = false;
   }
 
   openModal(template: TemplateRef<any>) {

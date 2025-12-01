@@ -112,7 +112,18 @@ def calculate_similarities(tensors, image_embedding, word_embedding, query_type,
 
 
 def normalize_similarities(similarities):
-    return [(sim - np.min(sim)) / (np.max(sim) - np.min(sim)) for sim in similarities]
+    result = []
+    for sim in similarities:
+        min_val = np.min(sim)
+        max_val = np.max(sim)
+        difference = max_val - min_val
+        
+        if difference == 0:
+            result.append(np.ones_like(sim)) 
+        else:
+            result.append((sim - min_val) / difference)
+            
+    return result
 
 
 def get_indices(similarities_lists, similarity_value):

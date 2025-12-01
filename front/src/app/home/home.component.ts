@@ -186,7 +186,7 @@ export class HomeComponent implements AfterViewInit {
       if (currentPolygons && currentPolygons.length > 0) {
         res = this.polygonFilter.applyPolygonFilter(res, currentPolygons);
       }   
-
+      console.log(res)
       const schema = this.forceGraph.schema;
       if (schema.query.length > 0) { this.onSelectionsClear() };
       schema.query.push(this.Query);
