@@ -37,9 +37,8 @@ def search():
 
     image_embedding = torch.load('./dataset/files/multi_clip_images_embedding.pt', map_location=current_app.torch_device)
     word_embedding = torch.load('./dataset/files/multi_clip_words_embedding.pt', map_location=current_app.torch_device)
-
     query_type = parameters['queryType']
-    similarity_value = 0
+    similarity_value = parameters['similarityValue'] / 100
     
     tensors = build_tensors(parameters, query_type, current_app.torch_device, current_app.image_encoder, current_app.image_preprocess, current_app.text_encoder, current_app.text_tokenizer)
     
