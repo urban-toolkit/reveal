@@ -144,29 +144,36 @@ export class ImageGalleryComponent implements OnInit {
   }
 
   onClick(event: any, id: number, index: number) {
-    event.preventDefault();
+    event.preventDefault(); 
+
     if(event.ctrlKey) {
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      const targetImage = this.allImages[index];
+
       if(!this.selectedIndices.includes(id)) {
-        this.selectedIndices.push(id)
+        this.selectedIndices.push(id);
         this.selectedImagePaths.push(event.target.currentSrc);
-        this.allImages[index].border = 'solid';
-        this.allImages[index].borderColor = "#00FF00";
-        this.allImages[index].borderWidth = "3px";
+        
+        targetImage.border = 'solid';
+        targetImage.borderColor = "#00FF00";
+        targetImage.borderWidth = "3px";
       } else {
         const selectedItemIndex = this.selectedIndices.indexOf(id);
         this.selectedIndices.splice(selectedItemIndex, 1);
+        
         const selectedImagePathsIndex = this.selectedImagePaths.indexOf(event.target.currentSrc);
-        this.selectedImagePaths.splice(selectedImagePathsIndex, 1);
-        this.allImages[index].border = 'none';
-        this.allImages[index].borderColor = "";
-        this.allImages[index].borderWidth = "0px";
+        if (selectedImagePathsIndex > -1) {
+            this.selectedImagePaths.splice(selectedImagePathsIndex, 1);
+        }
+
+        targetImage.border = 'none';
+        targetImage.borderColor = "";
+        targetImage.borderWidth = "0px";
       }
-      this.toggleImage.emit({labels: this.selectedIndices, selected: true});
       
-      // Note: We do NOT need to re-assign this.items = this.allImages here anymore.
-      // Since objects in this.items are references to objects in this.allImages,
-      // the border style changes will reflect automatically.
-      // Re-assigning would break the pagination view.
+      this.toggleImage.emit({labels: this.selectedIndices, selected: true});
     }
   }
 
@@ -174,16 +181,13 @@ export class ImageGalleryComponent implements OnInit {
     this.selectedIndices = [];
     this.selectedImagePaths = [];
 
-    // Reset all borders
     for(let i = 0; i < this.allImages.length; i++) {
       this.allImages[i].border = 'none';
       this.allImages[i].borderColor = "";
       this.allImages[i].borderWidth = "0px";
     }
 
-    // Apply selection to specific points
     for(let i = 0; i < points.length; i++) {
-      // Safety check in case points contains an index out of bounds
       if (this.allImages[points[i]]) {
         this.allImages[points[i]].border = 'solid';
         this.allImages[points[i]].borderColor = "#00FF00";
@@ -192,13 +196,9 @@ export class ImageGalleryComponent implements OnInit {
       }
     }
     
-    // We do not change this.items here, keeping the current scroll position/pagination state
-    // But we might need to refresh if the selection visual needs to update significantly
-    // However, usually Angular change detection handles the style binding.
   }
 
   updateTabCounter(value: number) {
-    // Legacy support or can be removed if strictly using Load More
     this.tabsCounter += value;
   }
 

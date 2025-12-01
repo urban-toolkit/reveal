@@ -37,14 +37,15 @@ def build_tensors(parameters, query_type, device, image_encoder, image_preproces
     
     if query_type == 0:
         texts_tensors = build_texts_tensors(texts, text_encoder, text_tokenizer, device)
-        return normalize_tensors(texts_tensors)
+        return normalize_tensors(torch.mean(texts_tensors, dim=0, keepdim=True))
     elif query_type == 1:
         images_tensors = build_images_tensors(images, device, image_encoder, image_preprocess, from_where)
-        return normalize_tensors(images_tensors)
+        return normalize_tensors(torch.mean(images_tensors, dim=0, keepdim=True))
     else:
         texts_tensors = build_texts_tensors(texts, text_encoder, text_tokenizer, device)
         images_tensors = build_images_tensors(images, device, image_encoder, image_preprocess, from_where)
-        return normalize_tensors(texts_tensors), normalize_tensors(images_tensors)
+        return (normalize_tensors(torch.mean(texts_tensors, dim=0, keepdim=True)), 
+                normalize_tensors(torch.mean(images_tensors, dim=0, keepdim=True)))
 
 
 def build_texts_tensors(texts, model, tokenizer, device):
@@ -112,18 +113,11 @@ def calculate_similarities(tensors, image_embedding, word_embedding, query_type,
 
 
 def normalize_similarities(similarities):
-    result = []
-    for sim in similarities:
-        min_val = np.min(sim)
-        max_val = np.max(sim)
-        difference = max_val - min_val
-        
-        if difference == 0:
-            result.append(np.ones_like(sim)) 
-        else:
-            result.append((sim - min_val) / difference)
-            
-    return result
+    min_val = np.min(similarities)
+    max_val = np.max(similarities)
+    if max_val == min_val:
+        return np.zeros_like(similarities)
+    return (similarities - min_val) / (max_val - min_val)
 
 
 def get_indices(similarities_lists, similarity_value):
