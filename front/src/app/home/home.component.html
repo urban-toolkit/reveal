@@ -84,8 +84,8 @@
     </div>
 
     <!-- Config Window -->
-    <div #configBox [ngDraggable]="this.draggable" class="widget config-window" style="display: none;"
-    [style.z-index] = "this.isConfigVisible() ? '100' : '-100' ">
+    <div #configBox [ngDraggable]="this.draggable" class="widget config-window"
+    [style.z-index] = "this.isConfigVisible() ? '999999999999' : '-100' ">
         <app-search-config
             (dragBoxToggled) = "this.toggleDragBoxDrag()"
             (similarityChanged) = "this.changeSimilarity($event)"
