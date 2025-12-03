@@ -363,8 +363,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
     console.log('Heatmap source added');
 
-    const colorScale = ['#fee5d9', '#fcae91', '#fb6a4a', '#de2d26', '#a50f15'];
-
     const layers = this.map.getStyle().layers;
     let firstSymbolId: string | undefined;
     
@@ -382,8 +380,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       type: 'heatmap',
       source: 'heatmap-source',
       maxzoom: 15,
-      paint: {
-        'heatmap-weight': 1,
+     paint: {
+        'heatmap-weight': 0.1, 
         'heatmap-intensity': [
           'interpolate',
           ['linear'],
@@ -395,29 +393,31 @@ export class MapComponent implements OnInit, AfterViewInit {
           'interpolate',
           ['linear'],
           ['heatmap-density'],
-          0, 'rgba(0, 0, 0, 0)',
-          0.2, colorScale[0],
-          0.4, colorScale[1],
-          0.6, colorScale[2],
-          0.8, colorScale[3],
-          1, colorScale[4]
+          0,    'rgba(254, 240, 217, 0)', 
+          0.1,  '#fef0d9',
+          0.4,  '#fdcc8a',
+          0.6,  '#fc8d59',
+          0.9,  '#e34a33',
+          1,    '#b30000'
         ],
         'heatmap-radius': [
           'interpolate',
           ['linear'],
           ['zoom'],
           0, 2,
-          15, 20
+          15, 30
         ],
         'heatmap-opacity': [
           'interpolate',
           ['linear'],
           ['zoom'],
           7, 1,
-          15, 0.5
+          15, 0.7
         ]
       }
     }, firstSymbolId);
+
+
     console.log('Heatmap layer added' + (firstSymbolId ? ' before ' + firstSymbolId : ''));
 
     this.map.addLayer({
