@@ -10,8 +10,8 @@
     position:absolute;
     top:50%;
     left:50%;
-    margin-left:-240px;/* half width*/
-    margin-top:-252px;/* half height*/  
+    margin-left:-240px;
+    margin-top:-252px;
     border-radius: 6px;
     box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.5);
     transform: translateY(-5px);
