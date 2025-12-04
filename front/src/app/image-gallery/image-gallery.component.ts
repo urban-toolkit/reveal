@@ -26,7 +26,6 @@ export class ImageGalleryComponent implements OnInit {
   public selectedImagePaths: string[] = [];
   private allImages: any[] = [];
   
-  // Optimization: Batch Loading Variables
   private batchSize = 50; 
   public hasMoreImages = false;
 
@@ -49,8 +48,6 @@ export class ImageGalleryComponent implements OnInit {
   
   ngAfterViewInit() {
     this.template = this.infoTemplate;
-    // Note: We might need to re-attach this listener when LightGallery refreshes, 
-    // but the toolbar usually persists.
     const interval = setInterval(() => {
         const btn = document.getElementById("lg-info-1");
         if(btn) {
@@ -67,7 +64,6 @@ export class ImageGalleryComponent implements OnInit {
       this.lightGallery.refresh();
       this.needRefresh = false;
       
-      // Re-attach drag listeners to new images
       const images = document.querySelectorAll('.grid-item img');
       for(let i = 0; i < images.length; i++) { 
         images[i].addEventListener('dragend', (event:any) => {
@@ -109,7 +105,6 @@ export class ImageGalleryComponent implements OnInit {
       });
     }
 
-    // Optimization: Load only the first batch
     this.items = this.allImages.slice(0, this.batchSize);
     this.hasMoreImages = this.allImages.length > this.items.length;
 
@@ -122,7 +117,6 @@ export class ImageGalleryComponent implements OnInit {
     const currentLength = this.items.length;
     const nextBatch = this.allImages.slice(currentLength, currentLength + this.batchSize);
     
-    // Append new items to the existing list
     this.items = [...this.items, ...nextBatch];
     
     this.hasMoreImages = this.allImages.length > this.items.length;
