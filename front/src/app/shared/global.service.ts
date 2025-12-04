@@ -10,9 +10,6 @@ export class GlobalService {
   }
 
   init() {
-    /**
-     * Esquema usado para o armazenamento dos dados
-     */
     const schema = {
       key: "schema",
       number_of_queries: 0,
@@ -46,17 +43,12 @@ export class GlobalService {
     this.setGlobal(embedding_selection);
   };
 
-  /**
-   * Recupera a variavél global gravada na sessão.
-   */
   getGlobal(key: string): any {
-    // invalid key
     if (key === null) {
       console.log(`getGlobal --> Ivalid key: ${key}`);
       return undefined;
     }
 
-    // item not found
     const value = sessionStorage.getItem(key);
     if (value === null) {
       console.log(`getGlobal --> Key not found: ${key}`);
@@ -66,9 +58,6 @@ export class GlobalService {
     return JSON.parse(value);
   }
 
-  /**
-   * Grava a varavél global na sessão.
-   */
   setGlobal(object: any) {
     sessionStorage.setItem(object.key, JSON.stringify(object));
   }
