@@ -152,7 +152,6 @@ export class StateService {
       }
     }
 
-    // CRITICAL FIX: Serialize ALL states before saving to Firestore
     const userDataToSave = {
       ...userData,
       states: userData.states.map((s: State) => ({
