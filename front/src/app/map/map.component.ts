@@ -380,8 +380,9 @@ export class MapComponent implements OnInit, AfterViewInit {
       type: 'heatmap',
       source: 'heatmap-source',
       maxzoom: 15,
-     paint: {
-        'heatmap-weight': 0.1, 
+      paint: {
+        'heatmap-weight': 0.05, 
+
         'heatmap-intensity': [
           'interpolate',
           ['linear'],
@@ -389,24 +390,27 @@ export class MapComponent implements OnInit, AfterViewInit {
           0, 1,
           15, 3
         ],
+
         'heatmap-color': [
           'interpolate',
           ['linear'],
           ['heatmap-density'],
           0,    'rgba(254, 240, 217, 0)', 
-          0.1,  '#fef0d9',
-          0.4,  '#fdcc8a',
-          0.6,  '#fc8d59',
-          0.9,  '#e34a33',
+          0.05, '#fef0d9', 
+          0.3,  '#fdcc8a',
+          0.5,  '#fc8d59',
+          0.8,  '#e34a33',
           1,    '#b30000'
         ],
+
         'heatmap-radius': [
           'interpolate',
           ['linear'],
           ['zoom'],
           0, 2,
-          15, 30
+          15, 20 
         ],
+
         'heatmap-opacity': [
           'interpolate',
           ['linear'],
