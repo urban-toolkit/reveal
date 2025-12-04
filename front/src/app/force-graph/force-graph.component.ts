@@ -238,10 +238,6 @@ export class ForceGraphComponent implements OnInit {
       this.selectedNodes.clear();
       this.parentNode.clear();
 
-      /**
-       * TODO:
-       * RESETAR TODAS AS VIEW SE TODOS OS NÓS FOREM DELETADOS
-       */
       if(this.forceGraphData.nodes.length > 0) {
         const node = this.forceGraphData.nodes[this.forceGraphData.nodes.length - 1]
         this.parentNode.add(node);

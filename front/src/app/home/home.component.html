@@ -37,7 +37,6 @@
     
     <ngx-spinner size="medium" type="ball-clip-rotate" [fullScreen] = "true"><p style="color: white" > Loading... </p></ngx-spinner>
     
-    <!-- Search Bar -->
     <div class="search-bar">
         <div class="wrap">
             <button class="log-out" style="width: 39px; margin-left: 12px;" (click)="drawer.toggle()"
@@ -83,7 +82,6 @@
         </div>
     </div>
 
-    <!-- Config Window -->
     <div #configBox [ngDraggable]="this.draggable" class="widget config-window"
     [style.z-index] = "this.isConfigVisible() ? '999999999999' : '-100' ">
         <app-search-config
@@ -94,11 +92,8 @@
         ></app-search-config>
     </div>
 
-    <!-- Main Content Area -->
     <div class="main-content">
-        <!-- Left Column -->
         <div class="left-column">
-            <!-- Embeddings Box (Image Embedding + Legend + Word Embedding) -->
             <div class="view-box embeddings-box">
                 <div class="embeddings-container">
                     <div [style.z-index] = "!displayCombinedComponent ? '100' : '-100' " class="embedding" id="image-embedding-div">
@@ -136,7 +131,6 @@
                 <ul id="contextmenu-combined-embedding"></ul>
             </div>
 
-            <!-- Force Graph Box -->
             <div class="view-box force-graph-box">
                 <div class="force-graph" id="force-graph-div">
                     <app-force-graph
@@ -147,9 +141,7 @@
             </div>
         </div>
 
-        <!-- Right Column -->
         <div class="right-column">
-            <!-- Gallery/Word Cloud Box -->
             <div class="view-box gallery-box">
                 <div class="gallery-container">
                     <div class="mode-control">
@@ -182,7 +174,6 @@
                 <ul id="contextmenu-galleries"></ul>
             </div>
 
-            <!-- Map Box -->
             <div class="view-box map-box">
                 <div class="map-wrapper">
                     <app-map 
