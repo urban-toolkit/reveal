@@ -45,7 +45,7 @@
 Ensure you have the following installed:
 
 - **Node.js** (v22.13.0 recommended)
-- **npm** (comes with Node)
+- **yarn** (npm install -g yarn)
 - **Angular CLI** (v14.1.0)
 - **Python** (3.9+)
 - **conda** (recommended for managing the backend environment)
@@ -58,8 +58,8 @@ Ensure you have the following installed:
 # Navigate to the frontend folder
 cd front
 
-# Install dependencies
-npm install
+# Install dependencies with yarn (not npm)
+yarn install
 
 # Run the frontend
 ng serve
