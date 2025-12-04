@@ -26,7 +26,7 @@
   
 .aligned-icon {
   vertical-align: middle;
-  margin-left: 4px; /* Adjust as needed */
+  margin-left: 4px;
 }
   
 .custom-slider {
@@ -70,12 +70,10 @@ mat-form-field {
     font-size: 16px;
 }
 
-/* For hover state */
 ::ng-deep .mat-checkbox:not(.mat-checkbox-disabled).mat-accent .mat-checkbox-ripple .mat-ripple-element {
     background-color: rgba(151, 169, 124, 0.2) !important;
 }
 
-/* For focus state */
 ::ng-deep .mat-checkbox .mat-checkbox-frame {
     border-color: #97a97c !important;
 }
@@ -84,7 +82,6 @@ mat-form-field {
     border-color: #97a97c !important;
 }
 
-/* Slider styling */
 ::ng-deep .mat-slider-track-fill {
   background-color: #97a97c !important;
 }
@@ -101,7 +98,6 @@ mat-form-field {
   background-color: #97a97c !important;
 }
 
-/* Datepicker styling */
 ::ng-deep .mat-datepicker-toggle {
   color: #97a97c !important;
 }
